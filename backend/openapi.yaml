@@ -1,0 +1,1002 @@
+openapi: 3.0.3
+info:
+  title: 健康导航 API
+  version: 1.0.0
+  description: |
+    健康导航（信息服务工具）API：统一返回体/错误码/分页，并强制推荐结果携带 evidence 与版本字段。
+
+    约定：
+    - 认证：`Authorization: Bearer <access_token>`（登录后获取）
+    - Request Id：客户端可传 `X-Request-Id`；服务端回 `X-Request-Id` 与 `X-Trace-Id`
+    - 同意（consents）：AI 能力需要敏感信息同意；行程规划（涉及定位）需要定位同意
+    - 缓存：默认不缓存；医院列表/详情与 openapi 文档可短缓存（见各接口响应头说明）
+
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: health
+  - name: auth
+  - name: consents
+  - name: ai
+  - name: hospitals
+  - name: itineraries
+  - name: checklists
+  - name: routes
+  - name: meta
+
+
+paths:
+  /v1/health:
+    get:
+      tags: [health]
+      summary: 健康检查
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /v1/auth/send-code:
+    post:
+      tags: [auth]
+      summary: 发送短信验证码（MVP：支持 mock 回传）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthSendCodeRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSendCodeResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/auth/login-with-code:
+    post:
+      tags: [auth]
+      summary: 验证码登录并签发 access_token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginWithCodeRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthLoginWithCodeResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/consents:
+    get:
+      tags: [consents]
+      summary: 获取用户同意状态
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentsGetResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+    post:
+      tags: [consents]
+      summary: 更新用户同意状态
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentsUpdateRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentsGetResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /v1/ai/analyze:
+    post:
+      tags: [ai]
+      summary: 症状文本分析（科室推荐/紧急提示）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAnalyzeRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAnalyzeResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /v1/ai/transcribe:
+    post:
+      tags: [ai]
+      summary: 语音转写（base64 音频）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiTranscribeRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiTranscribeResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /v1/hospitals:
+    get:
+      tags: [hospitals]
+      summary: 医院列表（可选按定位排序）
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+        - in: query
+          name: department
+          schema: { type: string }
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: lat
+          schema: { type: number }
+        - in: query
+          name: lng
+          schema: { type: number }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: page_size
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, deprecated: true }
+
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: public, max-age=600
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospitalsListResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/hospitals/{id}:
+    get:
+      tags: [hospitals]
+      summary: 医院详情
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: public, max-age=3600
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospitalDetailResponse'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/hospitals/recommend:
+    post:
+      tags: [hospitals]
+      summary: 推荐医院（强制 evidence 与版本字段）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HospitalRecommendRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HospitalRecommendResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /v1/itineraries/plan:
+    post:
+      tags: [itineraries]
+      summary: 行程规划（需要定位同意）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItineraryPlanRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryPlanResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/itineraries/{id}:
+    get:
+      tags: [itineraries]
+      summary: 行程详情（仅本人可见）
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryGetResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/checklists/generate:
+    post:
+      tags: [checklists]
+      summary: 生成出行清单
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistGenerateRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistGenerateResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/routes/drive:
+    post:
+      tags: [routes]
+      summary: 路线规划（驾车，后端代理 OSRM）
+      description: |
+        该接口用于将客户端路线规划请求统一走后端代理，便于后续切换为自建 OSRM/Valhalla，并集中做缓存、限流、错误码与合规策略。
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutesPlanRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: private, max-age=60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutesPlanResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /v1/routes/walk:
+    post:
+      tags: [routes]
+      summary: 路线规划（步行，后端代理 OSRM）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutesPlanRequest'
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: private, max-age=60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutesPlanResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /v1/openapi.yaml:
+    get:
+      tags: [meta]
+      summary: 获取 OpenAPI 文档（YAML）
+      responses:
+        '200':
+          description: ok
+          headers:
+            Cache-Control:
+              schema: { type: string }
+              example: public, max-age=600
+          content:
+            application/yaml:
+              schema:
+                type: string
+        '404': { $ref: '#/components/responses/NotFound' }
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    Unauthorized:
+      description: unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    Forbidden:
+      description: forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    NotFound:
+      description: not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    TooManyRequests:
+      description: too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    UpstreamError:
+      description: upstream error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+    InternalError:
+      description: internal error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+  schemas:
+    ApiBase:
+      type: object
+      description: |
+        通用响应元信息：推荐使用 snake_case（`request_id/trace_id`），同时保留 camelCase 兼容字段（`requestId/traceId`）。
+      required: [ok, code, message, request_id, trace_id, ts]
+      properties:
+        ok: { type: boolean }
+        code: { type: string }
+        message: { type: string }
+
+        request_id: { type: string }
+        trace_id: { type: string }
+
+        requestId: { type: string, deprecated: true }
+        traceId: { type: string, deprecated: true }
+
+        ts: { type: string, format: date-time }
+
+
+    ApiError:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, error]
+          properties:
+            ok: { type: boolean, enum: [false] }
+            error: { type: string }
+            details: { nullable: true }
+
+    HealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, service, time]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            service: { type: string }
+            time: { type: string, format: date-time }
+
+    AuthSendCodeRequest:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+          description: 中国大陆手机号（MVP）
+          example: '13800138000'
+
+    AuthSendCodeResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, mode, expires_in_seconds]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            mode: { type: string, enum: [mock, sms] }
+            expires_in_seconds: { type: integer, example: 300 }
+            mock_code: { type: string, nullable: true }
+
+    AuthLoginWithCodeRequest:
+      type: object
+      required: [phone, code]
+      properties:
+        phone:
+          type: string
+          example: '13800138000'
+        code:
+          type: string
+          description: 6 位数字验证码
+          example: '123456'
+
+    User:
+      type: object
+      required: [id, phone]
+      properties:
+        id: { type: string }
+        phone: { type: string }
+
+    AuthLoginWithCodeResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, user, access_token]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            user:
+              $ref: '#/components/schemas/User'
+            access_token: { type: string }
+
+    Consent:
+      type: object
+      description: |
+        用户同意状态：接口以 snake_case 为主，同时保留 camelCase 兼容字段。
+      required: [user_id, privacy_policy_version, privacy_accepted_at, sensitive_accepted, location_accepted]
+      properties:
+        # preferred snake_case
+        user_id: { type: string }
+        privacy_policy_version: { type: string }
+        privacy_accepted_at: { type: string, format: date-time }
+        sensitive_accepted: { type: boolean }
+        sensitive_accepted_at: { type: string, format: date-time, nullable: true }
+        location_accepted: { type: boolean }
+        location_accepted_at: { type: string, format: date-time, nullable: true }
+
+        # compat camelCase
+        userId: { type: string, deprecated: true }
+        privacyPolicyVersion: { type: string, deprecated: true }
+        privacyAcceptedAt: { type: string, format: date-time, deprecated: true }
+        sensitiveAccepted: { type: boolean, deprecated: true }
+        sensitiveAcceptedAt: { type: string, format: date-time, nullable: true, deprecated: true }
+        locationAccepted: { type: boolean, deprecated: true }
+        locationAcceptedAt: { type: string, format: date-time, nullable: true, deprecated: true }
+
+
+    ConsentsGetResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, consent]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            consent:
+              $ref: '#/components/schemas/Consent'
+
+    ConsentsUpdateRequest:
+      type: object
+      description: |
+        同意更新：推荐使用 snake_case；同时保留 camelCase 兼容字段。
+
+        - `accept_sensitive=true`：开启敏感同意
+        - `accept_location=true`：开启定位同意
+      properties:
+        # preferred snake_case
+        privacy_policy_version: { type: string, nullable: true }
+        accept_privacy: { type: boolean, nullable: true }
+        accept_sensitive: { type: boolean, nullable: true }
+        accept_location: { type: boolean, nullable: true }
+
+        # compat camelCase
+        privacyPolicyVersion: { type: string, nullable: true, deprecated: true }
+        acceptPrivacy: { type: boolean, nullable: true, deprecated: true }
+        acceptSensitive: { type: boolean, nullable: true, deprecated: true }
+        acceptLocation: { type: boolean, nullable: true, deprecated: true }
+
+
+    AiAnalyzeRequest:
+      type: object
+      required: [symptom_text]
+      properties:
+        symptom_text: { type: string }
+        context:
+          type: object
+          properties:
+            age: { type: integer, minimum: 0, maximum: 130 }
+            sex: { type: string, enum: [male, female, other] }
+            location_city: { type: string }
+
+    AiDepartmentItem:
+      type: object
+      required: [name, confidence, reason]
+      properties:
+        name: { type: string }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        reason: { type: string }
+
+    AiAnalyzeResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, model, departments]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            model: { type: string }
+            departments:
+              type: array
+              items: { $ref: '#/components/schemas/AiDepartmentItem' }
+            emergency_warning: { type: boolean, nullable: true }
+            summary: { type: string, nullable: true }
+
+    AiTranscribeRequest:
+      type: object
+      required: [audio_base64]
+      properties:
+        audio_base64:
+          type: string
+          description: base64 编码的音频内容（建议短录音）
+        mime: { type: string, nullable: true }
+        language: { type: string, nullable: true }
+
+    AiTranscribeResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, text, model]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            text: { type: string }
+            model: { type: string }
+
+    Coordinates:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat: { type: number }
+        lng: { type: number }
+
+    RouteSummary:
+      type: object
+      required: [mode, distance_m, duration_s, coordinates]
+      properties:
+        mode: { type: string, enum: [drive, walk] }
+        distance_m: { type: number }
+        duration_s: { type: number }
+        coordinates:
+          type: array
+          items: { $ref: '#/components/schemas/Coordinates' }
+
+    RoutesPlanRequest:
+      type: object
+      required: [from, to]
+      properties:
+        from: { $ref: '#/components/schemas/Coordinates' }
+        to: { $ref: '#/components/schemas/Coordinates' }
+
+    RoutesPlanResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, route]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            route:
+              $ref: '#/components/schemas/RouteSummary'
+
+    Hospital:
+
+      type: object
+      required: [id, name, city, address, departments, coordinates]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        level: { type: string, nullable: true }
+        city: { type: string }
+        address: { type: string }
+        departments:
+          type: array
+          items: { type: string }
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        distance_km: { type: number, nullable: true }
+
+    Evidence:
+      type: object
+      required: [type, source, fetchedAt, fields]
+      properties:
+        type:
+          type: string
+          enum: [POI, PUBLIC_INFO, INTERNAL]
+        source:
+          type: object
+          required: [name, providerId]
+          properties:
+            name: { type: string }
+            providerId: { type: string }
+            license: { type: string, enum: [public, commercial, unknown], nullable: true }
+        ref:
+          type: object
+          properties:
+            id: { type: string, nullable: true }
+            url: { type: string, nullable: true }
+        fetchedAt: { type: string, format: date-time }
+        fields:
+          type: array
+          items: { type: string }
+
+    RecommendationMeta:
+      type: object
+      required: [recommendationId, algoVersion, dataVersion]
+      properties:
+        recommendationId: { type: string }
+        algoVersion: { type: string }
+        promptVersion: { type: string, nullable: true }
+        dataVersion:
+          type: object
+          required: [poiProvider, publicInfoSnapshot]
+          properties:
+            poiProvider: { type: string }
+            publicInfoSnapshot: { type: string }
+
+    HospitalsListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, data, total]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Hospital' }
+            total: { type: integer }
+            page:
+              oneOf:
+                - type: object
+                  required: [type, nextCursor, hasMore]
+                  properties:
+                    type: { type: string, enum: [cursor] }
+                    nextCursor: { type: string, nullable: true }
+                    hasMore: { type: boolean }
+                - type: object
+                  required: [type, page, page_size, total]
+                  properties:
+                    type: { type: string, enum: [offset] }
+                    page: { type: integer }
+                    page_size: { type: integer }
+                    pageSize: { type: integer, deprecated: true }
+                    total: { type: integer }
+
+
+    HospitalDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, hospital]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            hospital: { $ref: '#/components/schemas/Hospital' }
+
+    HospitalRecommendRequest:
+      type: object
+      required: [departments, city]
+      properties:
+        departments:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: { type: string }
+        city: { type: string }
+        lat: { type: number, nullable: true }
+        lng: { type: number, nullable: true }
+
+    HospitalRecommendItem:
+      type: object
+      required: [hospital, rank, evidence]
+      properties:
+        hospital: { $ref: '#/components/schemas/Hospital' }
+        rank: { type: integer }
+        reason:
+          type: array
+          items: { type: string }
+        evidence:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/Evidence' }
+
+    HospitalRecommendResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, data, total, meta, items]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            data:
+              type: array
+              items: { $ref: '#/components/schemas/Hospital' }
+            total: { type: integer }
+            meta:
+              $ref: '#/components/schemas/RecommendationMeta'
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/HospitalRecommendItem' }
+
+    ItineraryPlanRequest:
+      type: object
+      required: [hospital_id, departure_address, budget_level, departure_date, return_date, city]
+      properties:
+        hospital_id: { type: string }
+        departure_address: { type: string }
+        budget_level: { type: string, enum: [low, mid, high] }
+        departure_date: { type: string }
+        return_date: { type: string }
+        city: { type: string }
+
+    ItineraryRoute:
+      type: object
+      required: [mode, distance_km, duration_min]
+      properties:
+        mode: { type: string }
+        distance_km: { type: number }
+        duration_min: { type: number }
+
+    ItineraryAccommodation:
+      type: object
+      required: [id, name, price_per_night, nights]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        price_per_night: { type: number }
+        nights: { type: integer }
+
+    ItineraryDining:
+      type: object
+      required: [id, name, avg_price, tags]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        avg_price: { type: number }
+        tags:
+          type: array
+          items: { type: string }
+
+    ItineraryCostEstimate:
+      type: object
+      required: [transport, accommodation, dining]
+      properties:
+        transport: { type: number }
+        accommodation: { type: number }
+        dining: { type: number }
+
+    ItineraryPlan:
+      type: object
+      required: [route, accommodation, dining, cost_estimate]
+      properties:
+        route: { $ref: '#/components/schemas/ItineraryRoute' }
+        accommodation:
+          type: array
+          items: { $ref: '#/components/schemas/ItineraryAccommodation' }
+        dining:
+          type: array
+          items: { $ref: '#/components/schemas/ItineraryDining' }
+        cost_estimate: { $ref: '#/components/schemas/ItineraryCostEstimate' }
+
+    ItineraryPlanResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, itinerary_id, plan]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            itinerary_id: { type: string }
+            plan: { $ref: '#/components/schemas/ItineraryPlan' }
+
+    Itinerary:
+      type: object
+      description: |
+        行程对象（当前实现为 camelCase + 内嵌 plan）。
+      required: [id, userId, hospitalId, departureAddress, budgetLevel, departureDate, returnDate, createdAt, plan]
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        hospitalId: { type: string }
+        departureAddress: { type: string }
+        budgetLevel: { type: string, enum: [low, mid, high] }
+        departureDate: { type: string }
+        returnDate: { type: string }
+        createdAt: { type: string, format: date-time }
+        plan: { type: object }
+
+    ItineraryGetResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, itinerary]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            itinerary: { $ref: '#/components/schemas/Itinerary' }
+
+    ChecklistGenerateRequest:
+      type: object
+      required: [itinerary_id, days]
+      properties:
+        itinerary_id: { type: string }
+        days: { type: integer, minimum: 1, maximum: 30 }
+
+    ChecklistItem:
+      type: object
+      required: [name, checked]
+      properties:
+        name: { type: string }
+        checked: { type: boolean }
+
+    ChecklistCategory:
+      type: object
+      required: [category, items]
+      properties:
+        category: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ChecklistItem' }
+
+    Checklist:
+      type: object
+      required: [version, categories]
+      properties:
+        version: { type: string }
+        categories:
+          type: array
+          items: { $ref: '#/components/schemas/ChecklistCategory' }
+
+    ChecklistGenerateResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiBase'
+        - type: object
+          required: [ok, checklist]
+          properties:
+            ok: { type: boolean, enum: [true] }
+            checklist: { $ref: '#/components/schemas/Checklist' }

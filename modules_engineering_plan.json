@@ -1,0 +1,221 @@
+{
+  "meta": {
+    "agent": "工程方案官",
+    "status": "ok",
+    "timestamp": "2026-01-23T10:30:00.000Z"
+  },
+  "data": {
+    "architecture": "React Native + Node.js/Express + MongoDB",
+    "modules": ["M4-行程规划引擎", "M5-住宿服务集成", "M6-餐饮服务集成"],
+    "screen_list": [
+      "行程规划配置页",
+      "路线规划结果页",
+      "方案详情弹窗",
+      "地址管理页面",
+      "住宿推荐页",
+      "住宿详情页",
+      "住宿对比页",
+      "收藏管理页",
+      "餐饮推荐页",
+      "餐饮详情页",
+      "智能推荐页"
+    ],
+    "state_management": "Redux Toolkit",
+    "local_storage": "AsyncStorage",
+    "dependencies": [
+      "amap-node-sdk",
+      "@react-native-amap/geolocation",
+      "@react-native-mapbox-gl/maps",
+      "axios",
+      "node-cache",
+      "react-native-image-carousel"
+    ],
+    "file_tree": [
+      "backend/src/modules/route-planning/controllers/routeController.ts",
+      "backend/src/modules/route-planning/services/routeService.ts",
+      "backend/src/modules/route-planning/services/geocodingService.ts",
+      "backend/src/modules/route-planning/services/amapClient.ts",
+      "backend/src/modules/route-planning/models/Location.ts",
+      "backend/src/modules/route-planning/models/RoutePlan.ts",
+      "backend/src/modules/route-planning/routes/routeRoutes.ts",
+      "backend/src/modules/route-planning/tests/routeService.test.ts",
+      "backend/src/modules/accommodation/controllers/accommodationController.ts",
+      "backend/src/modules/accommodation/services/accommodationService.ts",
+      "backend/src/modules/accommodation/services/hotelProviderService.ts",
+      "backend/src/modules/accommodation/services/meituanHotelService.ts",
+      "backend/src/modules/accommodation/services/ctripHotelService.ts",
+      "backend/src/modules/accommodation/models/Accommodation.ts",
+      "backend/src/modules/accommodation/models/AccommodationCollection.ts",
+      "backend/src/modules/accommodation/routes/accommodationRoutes.ts",
+      "backend/src/modules/accommodation/tests/accommodationService.test.ts",
+      "backend/src/modules/dining/controllers/diningController.ts",
+      "backend/src/modules/dining/services/diningService.ts",
+      "backend/src/modules/dining/services/restaurantProviderService.ts",
+      "backend/src/modules/dining/services/meituanDiningService.ts",
+      "backend/src/modules/dining/services/dianpingService.ts",
+      "backend/src/modules/dining/models/Restaurant.ts",
+      "backend/src/modules/dining/models/DiningPlan.ts",
+      "backend/src/modules/dining/routes/diningRoutes.ts",
+      "backend/src/modules/dining/tests/diningService.test.ts",
+      "frontend/src/screens/RoutePlanning/RouteConfigScreen.tsx",
+      "frontend/src/screens/RoutePlanning/RouteResultScreen.tsx",
+      "frontend/src/screens/RoutePlanning/RouteDetailModal.tsx",
+      "frontend/src/screens/RoutePlanning/AddressManagerScreen.tsx",
+      "frontend/src/screens/Accommodation/AccommodationListScreen.tsx",
+      "frontend/src/screens/Accommodation/AccommodationDetailScreen.tsx",
+      "frontend/src/screens/Accommodation/AccommodationCompareScreen.tsx",
+      "frontend/src/screens/Accommodation/CollectionManagementScreen.tsx",
+      "frontend/src/screens/Dining/DiningRecommendationScreen.tsx",
+      "frontend/src/screens/Dining/RestaurantDetailScreen.tsx",
+      "frontend/src/components/RoutePlanning/AddressInput.tsx",
+      "frontend/src/components/RoutePlanning/BudgetSelector.tsx",
+      "frontend/src/components/RoutePlanning/RouteCard.tsx",
+      "frontend/src/components/Accommodation/AccommodationCard.tsx",
+      "frontend/src/components/Accommodation/BudgetFilterTabs.tsx",
+      "frontend/src/components/Accommodation/AccommodationCompareTable.tsx",
+      "frontend/src/components/Dining/RestaurantCard.tsx",
+      "frontend/src/components/Dining/RecommendationReason.tsx",
+      "frontend/src/store/slices/routeSlice.ts",
+      "frontend/src/store/slices/locationSlice.ts",
+      "frontend/src/store/slices/accommodationSlice.ts",
+      "frontend/src/store/slices/diningSlice.ts",
+      "frontend/src/services/amapService.ts",
+      "frontend/src/services/routeService.ts",
+      "frontend/src/services/accommodationService.ts",
+      "frontend/src/services/diningService.ts",
+      "frontend/src/types/route.ts",
+      "frontend/src/types/accommodation.ts",
+      "frontend/src/types/dining.ts"
+    ],
+    "build_steps": [
+      {
+        "step": 1,
+        "action": "安装后端依赖",
+        "command": "cd backend && npm install amap-node-sdk axios node-cache",
+        "description": "安装高德地图SDK和HTTP客户端"
+      },
+      {
+        "step": 2,
+        "action": "配置高德地图API密钥",
+        "command": "export AMAP_WEB_KEY=your_web_key && export AMAP_SERVER_KEY=your_server_key",
+        "description": "设置高德地图API环境变量"
+      },
+      {
+        "step": 3,
+        "action": "安装前端依赖",
+        "command": "cd frontend && npm install @react-native-amap/geolocation axios lodash react-native-image-carousel",
+        "description": "安装高德定位和UI组件"
+      },
+      {
+        "step": 4,
+        "action": "配置高德地图iOS密钥",
+        "command": "在AppDelegate.m中添加高德地图密钥配置",
+        "description": "iOS平台高德地图配置"
+      },
+      {
+        "step": 5,
+        "action": "运行后端测试",
+        "command": "cd backend && npm test -- --testPathPattern=modules/(route-planning|accommodation|dining)",
+        "description": "执行模块单元测试"
+      },
+      {
+        "step": 6,
+        "action": "启动后端服务",
+        "command": "cd backend && npm run dev",
+        "description": "启动Node.js开发服务器"
+      },
+      {
+        "step": 7,
+        "action": "启动前端开发服务",
+        "command": "cd frontend && npx react-native start",
+        "description": "启动React Native开发服务器"
+      },
+      {
+        "step": 8,
+        "action": "运行iOS应用",
+        "command": "cd frontend && npx react-native run-ios",
+        "description": "iOS平台编译运行"
+      },
+      {
+        "step": 9,
+        "action": "运行Android应用",
+        "command": "cd frontend && npx react-native run-android",
+        "description": "Android平台编译运行"
+      }
+    ],
+    "docker_compose": "version: '3.8'\nservices:\n  backend:\n    build: ./backend\n    ports:\n      - \"3000:3000\"\n    environment:\n      - AMAP_WEB_KEY=${AMAP_WEB_KEY}\n      - AMAP_SERVER_KEY=${AMAP_SERVER_KEY}\n      - MONGODB_URI=mongodb://mongo:27017/medical-trip\n    depends_on:\n      - mongo\n    networks:\n      - app-network\n\n  mongo:\n    image: mongo:6\n    ports:\n      - \"27017:27017\"\n    volumes:\n      - mongo-data:/data/db\n    networks:\n      - app-network\n\nnetworks:\n  app-network:\n    driver: bridge\n\nvolumes:\n  mongo-data:",
+    "ui_implementation": [
+      {
+        "screen": "行程规划配置页",
+        "components": ["AddressInput", "BudgetSelector", "DatePicker", "TransportModeFilter"],
+        "interactions": ["地址自动补全", "地图选点", "档位切换动画", "日期范围选择"],
+        "state_dependencies": ["departureLocation", "destinationLocation", "departureDate", "budgetLevel"]
+      },
+      {
+        "screen": "路线规划结果页",
+        "components": ["RouteCard", "RouteMapPreview", "NavigationSteps", "TransportModeFilter"],
+        "interactions": ["多方案对比", "地图联动", "分步骤导航展开", "方案选择确认"],
+        "state_dependencies": ["routeOptions", "selectedOption", "currentBudgetLevel"]
+      },
+      {
+        "screen": "住宿推荐页",
+        "components": ["AccommodationCard", "BudgetFilterTabs", "RoomTypeSelector"],
+        "interactions": ["档位切换", "卡片点击详情", "收藏操作", "加入对比"],
+        "state_dependencies": ["hotels", "filters", "pagination", "selectedForCompare"]
+      },
+      {
+        "screen": "住宿对比页",
+        "components": ["AccommodationCompareTable", "SelectionBar"],
+        "interactions": ["多列对比", "差异高亮", "推荐标识", "选择确认"],
+        "state_dependencies": ["selectedHotels", "comparisonData"]
+      },
+      {
+        "screen": "餐饮推荐页",
+        "components": ["RestaurantCard", "RecommendationReason", "DietaryFilter"],
+        "interactions": ["智能推荐展示", "推荐理由显示", "筛选过滤", "收藏操作"],
+        "state_dependencies": ["recommendations", "restaurantList", "filters"]
+      }
+    ],
+    "risks": [
+      {
+        "risk": "第三方API稳定性风险",
+        "description": "高德地图、美团、携程等第三方API可能存在服务不稳定或接口变更",
+        "impact": "高",
+        "probability": "中",
+        "mitigation": "实现API抽象层支持多服务商切换，建立熔断机制和备用方案"
+      },
+      {
+        "risk": "数据一致性风险",
+        "description": "多供应商数据聚合可能存在重复或冲突",
+        "impact": "中",
+        "probability": "中",
+        "mitigation": "实现智能去重算法，建立数据校验机制"
+      },
+      {
+        "risk": "费用估算准确性风险",
+        "description": "住宿餐饮费用估算可能与实际有偏差",
+        "impact": "中",
+        "probability": "中",
+        "mitigation": "明确标注预估范围，注明实际价格以供应商为准"
+      }
+    ],
+    "rollback": [
+      {
+        "action": "回滚到上一版本",
+        "command": "git checkout HEAD~1",
+        "description": "恢复到上一个Git提交"
+      },
+      {
+        "action": "回滚数据库迁移",
+        "command": "mongodump --db medical-trip --collection accommodations && mongorestore --drop",
+        "description": "恢复住宿数据集合"
+      },
+      {
+        "action": "回滚环境变量",
+        "command": "cp .env.backup .env",
+        "description": "恢复环境变量配置"
+      }
+    ]
+  },
+  "errors": []
+}

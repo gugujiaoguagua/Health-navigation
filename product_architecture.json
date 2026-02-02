@@ -1,0 +1,539 @@
+{
+  "meta": {
+    "agent": "架构与产品官",
+    "status": "ok",
+    "timestamp": "2026-01-23T10:30:00.000Z"
+  },
+  "data": {
+    "overview": {
+      "product_name": "医疗出行助手",
+      "product_position": "基于AI智能推荐的医疗出行综合服务平台",
+      "target_users": ["普通用户", "慢性病患者", "老年患者", "异地就医患者"],
+      "core_value": "通过AI智能分析症状推荐合适科室，结合行程规划为患者提供一站式就医出行解决方案",
+      "key_features": [
+        "AI症状分析智能分诊",
+        "医院科室精准推荐",
+        "多档位行程规划（住宿/餐饮/交通）",
+        "就医行程清单自动生成",
+        "跨平台移动端覆盖"
+      ],
+      "differentiator": "整合症状分析+出行规划+行程管理的全链路医疗出行服务，区别于传统挂号平台"
+    },
+    "goals": [
+      {
+        "id": "G1",
+        "description": "实现AI智能分诊，准确率>=85%",
+        "metric": "分诊准确率≥85%，用户满意度≥4.2分"
+      },
+      {
+        "id": "G2",
+        "description": "提供完整就医行程规划，覆盖用户就医全流程",
+        "metric": "行程规划完成率≥90%，用户复购率≥60%"
+      },
+      {
+        "id": "G3",
+        "description": "支持多档位消费选择，满足不同用户需求",
+        "metric": "高中低档位选择覆盖率100%，价格满意度≥3.8分"
+      },
+      {
+        "id": "G4",
+        "description": "确保数据安全与合规，符合中国网络安全法",
+        "metric": "安全合规审计通过率100%，数据泄露事件=0"
+      }
+    ],
+    "scope": {
+      "in_scope": [
+        "AI症状分析推荐科室功能",
+        "医院信息查询与展示",
+        "出行路线规划（公交/打车/自驾）",
+        "住宿预订（低/中/高三档）",
+        "餐饮推荐（低/中/高三档）",
+        "就医行程清单生成与管理",
+        "用户历史记录与偏好管理",
+        "消息通知（订单/提醒）",
+        "在线客服支持"
+      ],
+      "out_of_scope": [
+        "在线挂号功能",
+        "医疗咨询与诊断",
+        "支付功能（初期版本）",
+        "医疗影像传输",
+        "保险购买",
+        "海外医院服务"
+      ]
+    },
+    "non_goals": [
+      "不提供替代医生诊断的服务",
+      "不直接连接医院HIS系统",
+      "不存储用户病历原始数据",
+      "不进行医疗广告推送",
+      "不支持急救类紧急就医场景"
+    ],
+    "user_flows": [
+      {
+        "id": "UF1",
+        "name": "症状分析分诊流程",
+        "description": "用户输入症状描述，AI分析并推荐合适的医院科室",
+        "steps": [
+          {"step": 1, "action": "用户打开APP，选择症状描述入口", "screen": "首页→症状分析"},
+          {"step": 2, "action": "用户通过文字或语音描述症状", "screen": "症状输入页"},
+          {"step": 3, "action": "AI分析症状，生成科室推荐列表", "screen": "AI分析中→结果展示"},
+          {"step": 4, "action": "用户查看推荐科室详情，选择目标科室", "screen": "科室推荐详情页"},
+          {"step": 5, "action": "系统展示推荐医院列表", "screen": "医院推荐列表页"}
+        ],
+        "output": "推荐的医院科室列表"
+      },
+      {
+        "id": "UF2",
+        "name": "行程规划流程",
+        "description": "用户选择医院后，规划出行路线、住宿和餐饮",
+        "steps": [
+          {"step": 1, "action": "用户选择目标医院", "screen": "医院详情页"},
+          {"step": 2, "action": "设置出发地、日期、预算档位", "screen": "行程规划配置页"},
+          {"step": 3, "action": "系统生成出行路线方案", "screen": "路线规划结果页"},
+          {"step": 4, "action": "系统推荐住宿选项（按档位）", "screen": "住宿推荐页"},
+          {"step": 5, "action": "系统推荐餐饮选项（按档位）", "screen": "餐饮推荐页"},
+          {"step": 6, "action": "用户确认方案，生成完整行程单", "screen": "行程确认页"}
+        ],
+        "output": "完整就医行程单"
+      },
+      {
+        "id": "UF3",
+        "name": "行程管理流程",
+        "description": "用户查看、修改、分享已生成的行程清单",
+        "steps": [
+          {"step": 1, "action": "进入行程管理页面", "screen": "我的行程页"},
+          {"step": 2, "action": "选择查看/编辑行程", "screen": "行程列表→详情页"},
+          {"step": 3, "action": "修改行程内容", "screen": "行程编辑页"},
+          {"step": 4, "action": "导出或分享行程单", "screen": "分享/导出页"}
+        ],
+        "output": "编辑后的行程清单"
+      }
+    ],
+    "data_entities": [
+      {
+        "entity": "User",
+        "description": "用户基本信息表",
+        "fields": [
+          {"name": "user_id", "type": "String", "required": true, "description": "用户唯一标识"},
+          {"name": "phone", "type": "String", "required": true, "description": "手机号"},
+          {"name": "nickname", "type": "String", "required": false, "description": "昵称"},
+          {"name": "avatar", "type": "String", "required": false, "description": "头像URL"},
+          {"name": "created_at", "type": "Date", "required": true, "description": "创建时间"},
+          {"name": "updated_at", "type": "Date", "required": true, "description": "更新时间"}
+        ]
+      },
+      {
+        "entity": "SymptomAnalysis",
+        "description": "症状分析记录表",
+        "fields": [
+          {"name": "analysis_id", "type": "String", "required": true, "description": "分析记录ID"},
+          {"name": "user_id", "type": "String", "required": true, "description": "用户ID"},
+          {"name": "symptom_text", "type": "String", "required": true, "description": "用户描述的症状"},
+          {"name": "ai_model", "type": "String", "required": true, "description": "使用的AI模型"},
+          {"name": "recommended_departments", "type": "Array", "required": true, "description": "推荐科室列表"},
+          {"name": "confidence_score", "type": "Number", "required": true, "description": "置信度分数"},
+          {"name": "created_at", "type": "Date", "required": true, "description": "分析时间"}
+        ]
+      },
+      {
+        "entity": "Hospital",
+        "description": "医院信息表",
+        "fields": [
+          {"name": "hospital_id", "type": "String", "required": true, "description": "医院唯一标识"},
+          {"name": "name", "type": "String", "required": true, "description": "医院名称"},
+          {"name": "level", "type": "String", "required": true, "description": "医院等级（三甲/三乙/二甲等）"},
+          {"name": "province", "type": "String", "required": true, "description": "省份"},
+          {"name": "city", "type": "String", "required": true, "description": "城市"},
+          {"name": "district", "type": "String", "required": false, "description": "区县"},
+          {"name": "address", "type": "String", "required": true, "description": "详细地址"},
+          {"name": "departments", "type": "Array", "required": true, "description": "科室列表"},
+          {"name": "contact_phone", "type": "String", "required": false, "description": "联系电话"},
+          {"name": "coordinates", "type": "Object", "required": true, "description": "经纬度坐标"}
+        ]
+      },
+      {
+        "entity": "Itinerary",
+        "description": "行程单表",
+        "fields": [
+          {"name": "itinerary_id", "type": "String", "required": true, "description": "行程单ID"},
+          {"name": "user_id", "type": "String", "required": true, "description": "用户ID"},
+          {"name": "hospital_id", "type": "String", "required": true, "description": "目标医院ID"},
+          {"name": "departure_address", "type": "String", "required": true, "description": "出发地址"},
+          {"name": "budget_level", "type": "String", "required": true, "description": "预算档位（low/mid/high）"},
+          {"name": "departure_date", "type": "Date", "required": true, "description": "出发日期"},
+          {"name": "return_date", "type": "Date", "required": true, "description": "返程日期"},
+          {"name": "transportation", "type": "Object", "required": true, "description": "交通方案"},
+          {"name": "accommodation", "type": "Object", "required": false, "description": "住宿方案"},
+          {"name": "dining", "type": "Array", "required": false, "description": "餐饮方案列表"},
+          {"name": "status", "type": "String", "required": true, "description": "状态（draft/confirmed/completed）"},
+          {"name": "created_at", "type": "Date", "required": true, "description": "创建时间"}
+        ]
+      },
+      {
+        "entity": "ItineraryChecklist",
+        "description": "行程清单表",
+        "fields": [
+          {"name": "checklist_id", "type": "String", "required": true, "description": "清单ID"},
+          {"name": "itinerary_id", "type": "String", "required": true, "description": "关联行程ID"},
+          {"name": "items", "type": "Array", "required": true, "description": "清单项目列表"},
+          {"name": "category", "type": "String", "required": true, "description": "分类（证件/药品/衣物/电子设备等）"},
+          {"name": "created_at", "type": "Date", "required": true, "description": "创建时间"}
+        ]
+      }
+    ],
+    "tech_stack": {
+      "frontend": {
+        "framework": "React Native",
+        "language": "TypeScript",
+        "state_management": "Redux Toolkit",
+        "navigation": "React Navigation",
+        "network": "Axios",
+        "local_storage": "AsyncStorage",
+        "ui_components": "React Native Paper",
+        "map_sdk": "Amap Location + Map SDK (高德地图)"
+      },
+      "backend": {
+        "framework": "Node.js + Express.js",
+        "language": "TypeScript",
+        "orm": "Mongoose (MongoDB ODM)",
+        "authentication": "JWT + bcrypt",
+        "api_docs": "Swagger/OpenAPI 3.0",
+        "rate_limiting": "express-rate-limit",
+        "cors": "cors middleware",
+        "validation": "Joi"
+      },
+      "database": {
+        "type": "MongoDB",
+        "hosting": "MongoDB Atlas / 自建服务器",
+        "replica_set": "建议配置副本集",
+        "encryption": "TLS/SSL加密传输",
+        "backup": "每日自动备份"
+      },
+      "third_party_services": [
+        {
+          "name": "智谱AI (GLM-4.7)",
+          "purpose": "症状分析智能分诊",
+          "api_type": "REST API",
+          "rate_limit": "需配置API密钥和调用频率限制"
+        },
+        {
+          "name": "MiniMax-M2.1",
+          "purpose": "GLM-4.7频率限制时的备用AI模型",
+          "api_type": "REST API",
+          "fallback_strategy": "当GLM-4.7触发频率限制时自动切换"
+        },
+        {
+          "name": "高德地图API",
+          "purpose": "路线规划、地理编码、POI搜索",
+          "services": ["路线规划API", "地理编码API", "搜索API", "定位SDK"]
+        },
+        {
+          "name": "美团/携程API",
+          "purpose": "住宿和餐饮信息获取",
+          "services": ["酒店搜索API", "餐饮搜索API", "价格查询API"]
+        },
+        {
+          "name": "阿里云短信服务",
+          "purpose": "验证码和通知消息发送",
+          "features": ["短信验证码", "行程提醒通知"]
+        },
+        {
+          "name": "七牛云OSS",
+          "purpose": "用户头像和图片存储",
+          "features": ["图片上传", "CDN加速", "图片处理"]
+        }
+      ]
+    },
+    "ui_outputs": [
+      {
+        "page": "首页",
+        "description": "展示核心功能入口、快捷操作入口、个性化推荐",
+        "key_elements": ["症状分析入口", "我的行程入口", "医院搜索", "历史记录", "轮播推荐"],
+        "interactions": ["点击进入症状分析", "点击查看行程", "搜索框聚焦"]
+      },
+      {
+        "page": "症状分析页",
+        "description": "用户输入症状并获取AI分析结果",
+        "key_elements": ["文字输入框", "语音输入按钮", "快捷症状标签", "AI分析进度条", "推荐结果列表"],
+        "interactions": ["文字输入", "语音识别", "标签选择", "结果筛选", "收藏推荐"]
+      },
+      {
+        "page": "医院详情页",
+        "description": "展示医院详细信息和科室列表",
+        "key_elements": ["医院名称/等级", "地址和地图", "科室列表", "医院简介", "联系方式", "开始规划按钮"],
+        "interactions": ["查看科室详情", "导航到地图", "收藏医院", "开始行程规划"]
+      },
+      {
+        "page": "行程规划配置页",
+        "description": "用户配置行程规划参数",
+        "key_elements": ["出发地址输入", "日期选择器", "预算档位选择（低/中/高）", "出行方式选择", "开始规划按钮"],
+        "interactions": ["地址自动补全", "日期选择", "档位切换", "出行方式选择"]
+      },
+      {
+        "page": "行程规划结果页",
+        "description": "展示完整的行程规划方案",
+        "key_elements": ["交通方案卡片", "住宿推荐卡片", "餐饮推荐卡片", "费用预估", "确认行程按钮", "修改配置按钮"],
+        "interactions": ["查看详情", "替换选项", "调整预算", "确认方案"]
+      },
+      {
+        "page": "行程清单页",
+        "description": "展示就医行程清单和待办事项",
+        "key_elements": ["清单分类标签", "待办事项列表", "完成状态切换", "导出按钮", "分享按钮"],
+        "interactions": ["勾选完成", "添加自定义项", "导出行程单", "分享给亲友"]
+      },
+      {
+        "page": "我的页面",
+        "description": "用户个人中心",
+        "key_elements": ["用户头像/昵称", "历史记录", "收藏列表", "设置", "帮助与反馈", "关于我们"],
+        "interactions": ["查看历史", "管理收藏", "修改设置", "查看帮助", "退出登录"]
+      }
+    ],
+    "figma_plan": "完成产品需求文档后，按照以下优先级创建UI设计原型：\n1. 第一阶段：核心页面原型（首页、症状分析页、医院详情页）\n2. 第二阶段：行程规划流程原型（配置页、结果页、清单页）\n3. 第三阶段：用户中心原型（我的页面、设置页）\n4. 第四阶段：交互细节优化和动效设计\n5. 第五阶段：设计系统搭建和组件库整理\n\n建议使用Figma的Variables功能管理多档位UI差异，确保设计一致性。",
+    "risks": [
+      {
+        "id": "R1",
+        "title": "AI分诊准确率风险",
+        "description": "AI模型症状分析可能存在误判，导致推荐科室不准确",
+        "impact": "高",
+        "probability": "中",
+        "mitigation": "明确提示用户AI推荐仅供参考，建议就医前咨询专业医生；建立用户反馈机制持续优化模型；设置紧急症状预警机制"
+      },
+      {
+        "id": "R2",
+        "title": "第三方API依赖风险",
+        "description": "高德地图、美团、携程等第三方API可能存在稳定性或政策变化风险",
+        "impact": "高",
+        "probability": "中",
+        "mitigation": "设计API抽象层，支持多服务商切换；建立备用API服务商名单；实施API调用监控和异常告警"
+      },
+      {
+        "id": "R3",
+        "title": "数据安全与合规风险",
+        "description": "医疗相关数据涉及用户隐私，需符合中国网络安全法和数据安全法",
+        "impact": "高",
+        "probability": "低",
+        "mitigation": "实施数据加密存储和传输；建立数据访问权限控制；定期进行安全审计；制定隐私政策并获得用户同意"
+      },
+      {
+        "id": "R4",
+        "title": "AI模型切换体验风险",
+        "description": "GLM-4.7达到频率限制时切换到MiniMax-M2.1可能影响用户体验",
+        "impact": "中",
+        "probability": "中",
+        "mitigation": "实现平滑切换机制，最小化用户感知；监控API调用频率，提前预警；优化提示文案，告知用户当前使用模型"
+      },
+      {
+        "id": "R5",
+        "title": "医院数据准确性风险",
+        "description": "医院科室信息、营业时间等数据可能过时或不准确",
+        "impact": "中",
+        "probability": "中",
+        "mitigation": "建立数据更新机制，定期同步第三方数据源；提供用户纠错反馈入口；标注数据更新时间"
+      },
+      {
+        "id": "R6",
+        "title": "跨平台兼容性风险",
+        "description": "React Native在iOS和Android平台可能存在功能或性能差异",
+        "impact": "中",
+        "probability": "低",
+        "mitigation": "建立双平台测试流程；使用平台无关的组件库；针对特殊平台问题编写适配代码"
+      }
+    ],
+    "milestones": [
+      {
+        "id": "M1",
+        "phase": "产品与设计阶段",
+        "duration": "第1-3周",
+        "tasks": [
+          "完成产品需求文档（PRD）",
+          "完成业务流程设计",
+          "完成数据库schema设计",
+          "完成API接口设计文档",
+          "完成UI设计初稿"
+        ],
+        "deliverables": ["PRD文档", "流程图", "数据库设计文档", "API文档", "UI设计稿"],
+        "completion_criteria": "产品、设计、技术方案评审通过"
+      },
+      {
+        "id": "M2",
+        "phase": "基础架构搭建阶段",
+        "duration": "第4-6周",
+        "tasks": [
+          "搭建前端项目框架（React Native）",
+          "搭建后端项目框架（Node.js + Express）",
+          "配置MongoDB数据库",
+          "实现用户认证模块",
+          "集成高德地图SDK"
+        ],
+        "deliverables": ["可运行的前后端项目框架", "用户认证功能", "地图基础功能"],
+        "completion_criteria": "基础功能可运行，代码评审通过"
+      },
+      {
+        "id": "M3",
+        "phase": "核心功能开发阶段",
+        "duration": "第7-12周",
+        "tasks": [
+          "实现AI症状分析功能（GLM-4.7集成）",
+          "实现科室推荐逻辑",
+          "实现医院数据查询模块",
+          "实现AI模型自动切换机制",
+          "实现行程规划基础功能"
+        ],
+        "deliverables": ["症状分析功能", "科室推荐功能", "行程规划功能"],
+        "completion_criteria": "核心功能测试通过，单元测试覆盖率≥80%"
+      },
+      {
+        "id": "M4",
+        "phase": "完整功能开发阶段",
+        "duration": "第13-18周",
+        "tasks": [
+          "实现住宿预订集成（美团/携程API）",
+          "实现餐饮推荐集成",
+          "实现行程清单生成功能",
+          "实现多档位消费选择功能",
+          "实现用户历史记录和收藏功能"
+        ],
+        "deliverables": ["完整的行程规划功能", "住宿餐饮推荐功能", "行程清单功能"],
+        "completion_criteria": "完整功能联调通过，集成测试通过"
+      },
+      {
+        "id": "M5",
+        "phase": "测试与优化阶段",
+        "duration": "第19-22周",
+        "tasks": [
+          "执行系统测试和性能测试",
+          "修复测试发现的bug",
+          "优化应用性能和用户体验",
+          "进行安全渗透测试",
+          "完成安全合规检查"
+        ],
+        "deliverables": ["测试报告", "性能优化报告", "安全审计报告"],
+        "completion_criteria": "测试通过率≥95%，安全审计通过"
+      },
+      {
+        "id": "M6",
+        "phase": "上线与运营阶段",
+        "duration": "第23-24周",
+        "tasks": [
+          "部署生产环境",
+          "申请应用商店上架",
+          "配置监控和告警系统",
+          "建立用户反馈处理机制",
+          "制定运营推广计划"
+        ],
+        "deliverables": ["生产环境部署", "应用商店上线", "监控告警系统"],
+        "completion_criteria": "应用成功上架，用户可正常使用"
+      }
+    ],
+    "acceptance": [
+      "用户可通过文字或语音输入症状描述，系统返回≥3个推荐科室选项",
+      "AI分诊推荐科室的准确率达到85%以上（通过抽样评估）",
+      "推荐结果包含科室名称、医院信息、置信度评分",
+      "用户可设置出发地址，系统生成出行路线方案（包含多种交通方式）",
+      "住宿推荐支持低/中/高三档位选择，每档位≥3个推荐选项",
+      "餐饮推荐支持低/中/高三档位选择，每档位≥5个推荐选项",
+      "系统自动生成就医行程清单，清单包含证件类、药品类、衣物类等必备物品",
+      "行程清单支持自定义添加/删除项目，支持完成状态切换",
+      "行程规划支持导出为PDF或分享链接",
+      "GLM-4.7达到API调用频率限制时，系统自动切换至MiniMax-M2.1模型",
+      "模型切换过程对用户无感知或仅显示简短提示",
+      "用户数据在传输和存储过程中均采用加密处理",
+      "系统符合中国网络安全法要求，包含隐私政策弹窗",
+      "APP在iOS和Android平台均可正常运行，功能一致性≥95%",
+      "页面加载时间≤3秒（正常网络环境下）",
+      "API响应时间≤500ms（不含第三方服务调用）"
+    ],
+    "skills": [
+      {
+        "category": "前端开发",
+        "required_skills": [
+          "React Native移动端开发（iOS/Android）",
+          "TypeScript编程",
+          "Redux状态管理",
+          "高德地图SDK集成",
+          "语音识别集成",
+          "UI/UX设计协作"
+        ]
+      },
+      {
+        "category": "后端开发",
+        "required_skills": [
+          "Node.js + Express.js开发",
+          "RESTful API设计",
+          "MongoDB数据库设计与优化",
+          "JWT认证与安全",
+          "第三方API集成与抽象层设计",
+          "API Rate Limiting实现"
+        ]
+      },
+      {
+        "category": "AI与机器学习",
+        "required_skills": [
+          "大语言模型API集成（GLM-4.7、MiniMax-M2.1）",
+          "Prompt Engineering优化",
+          "AI模型切换策略实现",
+          "自然语言处理基础"
+        ]
+      },
+      {
+        "category": "产品与设计",
+        "required_skills": [
+          "产品需求分析",
+          "业务流程设计",
+          "用户体验设计",
+          "Figma原型设计",
+          "竞品分析"
+        ]
+      },
+      {
+        "category": "安全与合规",
+        "required_skills": [
+          "数据加密技术",
+          "隐私保护设计",
+          "网络安全法合规",
+          "安全审计与渗透测试"
+        ]
+      }
+    ],
+    "open_questions": [
+      {
+        "id": "Q1",
+        "question": "医院数据库的覆盖范围是仅包含三甲医院还是包含各级医院？",
+        "priority": "高",
+        "impact": "影响数据源选择和科室推荐逻辑"
+      },
+      {
+        "id": "Q2",
+        "question": "住宿和餐饮的第三方API是使用美团、携程还是其他服务商？是否需要同时集成多家？",
+        "priority": "高",
+        "impact": "影响API集成工作量和服务稳定性设计"
+      },
+      {
+        "id": "Q3",
+        "question": "是否需要支持用户直接通过APP完成住宿和餐饮的在线预订？",
+        "priority": "高",
+        "impact": "影响功能范围和支付系统集成"
+      },
+      {
+        "id": "Q4",
+        "question": "用户语音输入的语音识别是使用系统自带还是第三方语音服务？",
+        "priority": "中",
+        "impact": "影响技术选型和用户体验"
+      },
+      {
+        "id": "Q5",
+        "question": "是否需要支持家庭成员管理，为家庭成员创建行程？",
+        "priority": "中",
+        "impact": "影响用户系统设计和数据模型"
+      },
+      {
+        "id": "Q6",
+        "question": "行程清单是否需要支持离线查看功能？",
+        "priority": "中",
+        "impact": "影响本地存储方案和数据同步策略"
+      }
+    ]
+  },
+  "errors": []
+}

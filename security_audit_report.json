@@ -1,0 +1,472 @@
+{
+  "meta": {
+    "agent": "风险审计官",
+    "status": "ok",
+    "timestamp": "2026-01-25T01:45:00.000Z",
+    "project": "医疗出行助手",
+    "version": "1.1.0"
+  },
+  "data": {
+    "risks": [
+      {
+        "id": "R-001",
+        "category": "数据安全",
+        "title": "健康数据明文传输风险",
+        "description": "症状分析数据通过API传输至GLM-4.7/MiniMax-M2.1模型时，未明确提及端到端加密，第三方AI服务商可能访问用户健康信息",
+        "impact": "高",
+        "probability": "中",
+        "severity": "高危",
+        "remediation": "实现传输加密，评估AI服务商数据存储政策，与智谱AI/MiniMax签署数据处理协议(DPA)",
+        "status": "待修复"
+      },
+      {
+        "id": "R-002",
+        "category": "数据安全",
+        "title": "MongoDB数据库敏感数据未加密",
+        "description": "用户密码虽使用bcrypt加密，但症状分析记录、行程数据、健康档案等敏感信息在MongoDB中明文存储",
+        "impact": "高",
+        "probability": "低",
+        "severity": "高危",
+        "remediation": "对敏感字段实施字段级加密(AES-256)，使用MongoDB Atlas加密功能或应用层加密",
+        "status": "待修复"
+      },
+      {
+        "id": "R-003",
+        "category": "身份认证",
+        "title": "JWT Token安全风险",
+        "description": "已在移动端使用安全存储（SecureStore/Keychain）持久化Token，并在后端设置Access Token默认30分钟；Web演示仍使用localStorage，生产需替换为更安全方案并增加Refresh Token轮换/撤销机制",
+        "impact": "高",
+        "probability": "中",
+        "severity": "高危",
+        "remediation": "为生产环境补齐Refresh Token轮换与撤销、设备绑定、异常登录检测；Web端避免localStorage存Token",
+        "status": "部分修复"
+      },
+      {
+        "id": "R-004",
+        "category": "第三方依赖",
+        "title": "AI服务API密钥泄露风险",
+        "description": "GLM-4.7和MiniMax-M2.1的API密钥在环境变量中配置，但工程文档中示例命令直接暴露密钥模式(export AMAP_WEB_KEY=your_web_key)",
+        "impact": "高",
+        "probability": "低",
+        "severity": "高危",
+        "remediation": "使用密钥管理服务(如AWS Secrets Manager或HashiCorp Vault)，实施API密钥轮换策略，添加API使用监控和异常告警",
+        "status": "待修复"
+      },
+      {
+        "id": "R-005",
+        "category": "合规",
+        "title": "隐私政策合规风险",
+        "description": "产品架构文档提及隐私政策弹窗，但未明确用户健康数据收集范围、使用目的、存储期限、数据共享第三方等关键合规要素",
+        "impact": "高",
+        "probability": "中",
+        "severity": "高危",
+        "remediation": "制定符合《个人信息保护法》《网络安全法》的隐私政策，明确数据收集清单、用途、存储期限，添加用户同意记录功能",
+        "status": "待修复"
+      },
+      {
+        "id": "R-006",
+        "category": "业务逻辑",
+        "title": "AI分诊误判医疗风险",
+        "description": "AI症状分析推荐科室功能可能产生误判，若用户完全依赖AI推荐可能延误就医；文档虽提及紧急症状预警机制，但未明确责任声明",
+        "impact": "高",
+        "probability": "中",
+        "severity": "中危",
+        "remediation": "在症状分析结果页面添加显著免责声明，明确AI推荐仅供参考；在用户反馈机制中增加医疗专业人员审核流程",
+        "status": "待修复"
+      },
+      {
+        "id": "R-007",
+        "category": "基础设施",
+        "title": "第三方API服务可用性依赖",
+        "description": "系统依赖高德地图、美团、携程、阿里云短信、七牛云OSS等多个第三方服务，任一服务故障可能影响核心功能",
+        "impact": "高",
+        "probability": "中",
+        "severity": "中危",
+        "remediation": "实施API抽象层支持服务商切换，建立熔断器模式(Circuit Breaker)，实现备用服务商机制，实施服务健康监控",
+        "status": "待修复"
+      },
+      {
+        "id": "R-008",
+        "category": "数据安全",
+        "title": "短信验证码安全漏洞",
+        "description": "短信验证码发送频率限制虽已设计(60秒/次，10条/天)，但工程文档显示SmsVerification表无防暴力破解机制；验证码5分钟有效期需验证是否足够",
+        "impact": "中",
+        "probability": "中",
+        "severity": "中危",
+        "remediation": "增加图形验证码或行为验证，实施IP级别限流，验证码尝试失败超过5次锁定账户30分钟",
+        "status": "待修复"
+      },
+      {
+        "id": "R-009",
+        "category": "应用安全",
+        "title": "缺乏安全审计日志",
+        "description": "行程管理模块虽有操作历史记录，但全局缺乏安全相关日志(登录失败、权限变更、敏感操作、数据导出)，影响安全事件溯源",
+        "impact": "中",
+        "probability": "中",
+        "severity": "中危",
+        "remediation": "建立统一安全审计日志系统，记录登录尝试、Token刷新、权限变更、数据访问等关键操作，日志保留至少180天",
+        "status": "待修复"
+      },
+      {
+        "id": "R-010",
+        "category": "数据安全",
+        "title": "分享功能数据泄露风险",
+        "description": "行程分享功能虽实现数据脱敏(隐藏联系方式)，但分享链接生成机制使用6位share_code，需评估暴力破解难度和有效期管理",
+        "impact": "中",
+        "probability": "低",
+        "severity": "中危",
+        "remediation": "使用UUID或更长字符集(12位以上)，限制分享链接访问次数，实施IP绑定，增加分享行为审计日志",
+        "status": "待修复"
+      },
+      {
+        "id": "R-011",
+        "category": "合规",
+        "title": "数据跨境传输风险",
+        "description": "如使用MongoDB Atlas或云服务商涉及境外服务器，可能违反《数据安全法》关于数据出境的规定；AI模型服务可能涉及境外数据处理",
+        "impact": "中",
+        "probability": "低",
+        "severity": "中危",
+        "remediation": "确认所有数据存储和处理均在境内完成，如使用境外服务需进行数据出境安全评估并备案",
+        "status": "待修复"
+      },
+      {
+        "id": "R-012",
+        "category": "应用安全",
+        "title": "API限流配置不完善",
+        "description": "虽提及express-rate-limit，但未明确各API端点的限流配置；AI API调用频率限制依赖服务商，未见应用层控制",
+        "impact": "低",
+        "probability": "中",
+        "severity": "低危",
+        "remediation": "细化API限流配置：核心API 100次/分钟，登录API 10次/分钟，AI分析API 20次/分钟；实现分布式限流(Redis)",
+        "status": "建议修复"
+      },
+      {
+        "id": "R-013",
+        "category": "基础设施",
+        "title": "日志与监控不足",
+        "description": "预发布环境虽有ELK Stack、Prometheus+Grafana、New Relic监控，但生产环境监控配置未明确；缺乏安全事件告警机制",
+        "impact": "中",
+        "probability": "中",
+        "severity": "低危",
+        "remediation": "完善生产环境监控体系，配置安全事件实时告警，建立日志分析平台，定义关键安全指标(KPI)",
+        "status": "建议修复"
+      },
+      {
+        "id": "R-014",
+        "category": "数据安全",
+        "title": "本地存储敏感数据风险",
+        "description": "前端使用AsyncStorage存储用户Token、行程数据、清单数据，若设备丢失或Root/越狱后可能被窃取",
+        "impact": "低",
+        "probability": "低",
+        "severity": "低危",
+        "remediation": "对本地存储的敏感数据加密，使用react-native-sensitive-info或Keychain存储，考虑实现远程擦除功能",
+        "status": "建议修复"
+      }
+    ],
+    "compliance_checklist": [
+      {
+        "id": "CC-001",
+        "requirement": "《网络安全法》- 网络运营者安全保护义务",
+        "description": "采取技术措施和其他必要措施，保障网络安全、稳定运行，有效应对网络安全事件，防范网络违法犯罪活动",
+        "status": "部分符合",
+        "evidence": "有基础安全措施(JWT认证、HTTPS传输、API限流)，但缺少安全事件监控告警、应急响应机制",
+        "gap": "需完善安全监控体系，建立应急响应流程"
+      },
+      {
+        "id": "CC-002",
+        "requirement": "《网络安全法》- 网络安全等级保护",
+        "description": "网络运营者应当按照网络安全等级保护制度的要求，履行安全保护义务，保障网络免受干扰、破坏或者未经授权的访问",
+        "status": "未评估",
+        "evidence": "未提及等级保护定级和备案",
+        "gap": "建议进行网络安全等级保护定级评估"
+      },
+      {
+        "id": "CC-003",
+        "requirement": "《数据安全法》- 数据安全管理制度",
+        "description": "开展数据处理活动应当建立健全全流程数据安全管理制度，组织开展数据安全教育培训",
+        "status": "部分符合",
+        "evidence": "有数据分类概念(用户数据、症状数据、行程数据)，但缺乏完善的数据安全管理制度",
+        "gap": "需建立完善的数据安全管理制度"
+      },
+      {
+        "id": "CC-004",
+        "requirement": "《数据安全法》- 数据安全审查",
+        "description": "关系国家安全、国民经济命脉、重要民生、重大公共利益等数据属于国家核心数据，实行更加严格的管理制度",
+        "status": "符合",
+        "evidence": "医疗出行数据不属于国家核心数据范围",
+        "gap": "无"
+      },
+      {
+        "id": "CC-005",
+        "requirement": "《个人信息保护法》- 个人信息处理规则",
+        "description": "处理个人信息应当遵循合法、正当、必要和诚信原则，具有明确、合理的目的",
+        "status": "部分符合",
+        "evidence": "产品设计遵循目的最小化原则，但隐私政策不完善，用户告知不充分",
+        "gap": "需完善隐私政策，明确数据收集范围和使用目的"
+      },
+      {
+        "id": "CC-006",
+        "requirement": "《个人信息保护法》- 敏感个人信息处理规则",
+        "description": "处理敏感个人信息应当取得个人的单独同意；生物识别、医疗健康、金融账户、行踪轨迹等信息属于敏感个人信息",
+        "status": "部分符合",
+        "evidence": "收集症状分析(健康信息)、位置数据(行踪轨迹)等敏感信息，但未明确获取用户单独同意",
+        "gap": "需实现敏感信息处理的单独同意机制"
+      },
+      {
+        "id": "CC-007",
+        "requirement": "《个人信息保护法》- 个人信息安全影响评估",
+        "description": "处理敏感个人信息、利用个人信息进行自动化决策、委托处理个人信息、向第三方提供个人信息等情形，应当事前进行个人信息保护影响评估",
+        "status": "未进行",
+        "evidence": "未提及个人信息安全影响评估",
+        "gap": "建议在产品上线前完成个人信息安全影响评估"
+      },
+      {
+        "id": "CC-008",
+        "requirement": "《个人信息保护法》- 个人权利响应机制",
+        "description": "处理个人信息应当提供查阅、复制、更正、删除等个人权利响应机制",
+        "status": "部分符合",
+        "evidence": "用户中心支持信息查看、修改、删除，但数据导出(可携带权)、账户注销功能待验证",
+        "gap": "需完善数据导出和账户注销功能"
+      },
+      {
+        "id": "CC-009",
+        "requirement": "《个人信息保护法》- 数据存储与跨境",
+        "description": "个人信息处理者应当为个人实现删除权提供技术手段，个人信息原则上应当在中华人民共和国境内存储；向境外提供个人信息应当满足安全评估或标准合同要求",
+        "status": "部分符合",
+        "evidence": "未明确数据存储位置；AI服务可能涉及境外数据处理",
+        "gap": "确认数据存储位置，评估AI服务数据跨境风险"
+      },
+      {
+        "id": "CC-010",
+        "requirement": "《移动互联网应用程序信息服务管理规定》",
+        "description": "APP提供者应当建立健全用户信息安全保障制度，不得收集与其提供服务无关的个人信息",
+        "status": "部分符合",
+        "evidence": "产品设计遵循必要原则，但隐私政策不完善，缺少用户信息保护制度文档",
+        "gap": "需完善隐私政策和用户信息保护制度"
+      },
+      {
+        "id": "CC-011",
+        "requirement": "《互联网诊疗管理办法》相关",
+        "description": "本产品虽非诊疗服务，但AI症状分析功能可能涉及医疗健康信息，需注意合规边界",
+        "status": "部分符合",
+        "evidence": "产品明确标注AI推荐仅供参考，但缺少医疗免责声明和风险提示机制",
+        "gap": "需在产品界面增加显著医疗免责声明"
+      },
+      {
+        "id": "CC-012",
+        "requirement": "第三方服务商数据安全",
+        "description": "与第三方服务商(智谱AI、阿里云、高德等)的数据处理协议(DPA)签署",
+        "status": "未确认",
+        "evidence": "未提及与第三方服务商签署数据处理协议",
+        "gap": "需与所有涉及用户数据处理的第三方服务商签署DPA"
+      }
+    ],
+    "recommendations": [
+      {
+        "priority": "P0",
+        "category": "数据加密",
+        "recommendation": "实施敏感数据字段级加密",
+        "description": "对症状分析记录、行程数据、健康档案等敏感数据实施AES-256加密；使用MongoDB Atlas静态加密功能；评估并选择合适的密钥管理方案"
+      },
+      {
+        "priority": "P0",
+        "category": "合规",
+        "recommendation": "完善隐私政策和用户同意机制",
+        "description": "制定符合《个人信息保护法》的隐私政策，包含：数据收集清单、使用目的、存储期限、第三方共享情况、用户权利；实现敏感信息的单独同意弹窗；记录用户同意日志"
+      },
+      {
+        "priority": "P0",
+        "category": "身份认证",
+        "recommendation": "加强Token安全存储和生命周期管理",
+        "description": "使用React Native Keychain/secure-storage存储Token；设置Access Token有效期30分钟，Refresh Token 7天；实现自动刷新和旧Token失效；增加Token异常使用监控"
+      },
+      {
+        "priority": "P1",
+        "category": "数据安全",
+        "recommendation": "建立数据安全管理体系",
+        "description": "制定数据分类分级标准；建立数据安全管理制度；开展数据安全培训；对涉及健康数据的系统进行安全影响评估"
+      },
+      {
+        "priority": "P1",
+        "category": "合规",
+        "recommendation": "完成个人信息安全影响评估",
+        "description": "按照《个人信息保护法》要求，对AI症状分析、行程规划等涉及敏感信息的处理活动进行安全影响评估，形成评估报告并留存备查"
+      },
+      {
+        "priority": "P1",
+        "category": "第三方依赖",
+        "recommendation": "完善API密钥管理和第三方服务监控",
+        "description": "使用密钥管理服务集中管理API密钥；实施密钥自动轮换；建立第三方服务健康监控；制定服务降级和熔断策略"
+      },
+      {
+        "priority": "P1",
+        "category": "业务逻辑",
+        "recommendation": "完善AI分诊免责声明和风险提示",
+        "description": "在症状分析结果页面添加显著免责声明；紧急症状展示预警卡片并引导就医；建立用户反馈收集机制；增加医疗专业人员审核流程"
+      },
+      {
+        "priority": "P2",
+        "category": "基础设施",
+        "recommendation": "完善安全监控和日志审计",
+        "description": "建立统一安全审计日志系统；配置安全事件实时告警；完善生产环境监控体系；日志保留至少180天"
+      },
+      {
+        "priority": "P2",
+        "category": "应用安全",
+        "recommendation": "加强API安全控制",
+        "description": "细化API限流配置；实现分布式限流(Redis)；增加输入验证和输出编码；实施完整的异常处理"
+      },
+      {
+        "priority": "P2",
+        "category": "合规",
+        "recommendation": "完善用户权利响应机制",
+        "description": "实现完整的数据导出功能(可携带权)；完善账户注销流程(包含数据删除)；提供数据处理历史记录查询"
+      },
+      {
+        "priority": "P2",
+        "category": "数据安全",
+        "recommendation": "本地数据存储加固",
+        "description": "对本地存储的敏感数据加密；使用安全存储方案(react-native-sensitive-info)；实现敏感数据自动清理机制"
+      },
+      {
+        "priority": "P3",
+        "category": "合规",
+        "recommendation": "评估网络安全等级保护需求",
+        "description": "评估系统是否需要进行网络安全等级保护定级；如需要，按照等级保护要求进行安全建设和测评"
+      }
+    ],
+    "blockers": [
+      {
+        "id": "B-001",
+        "title": "敏感健康数据未加密存储",
+        "description": "MongoDB中存储的症状分析记录、行程数据等敏感信息未加密，不符合数据安全基本要求",
+        "severity": "高危",
+        "impact": "可能导致大规模用户健康数据泄露，违反《数据安全法》《个人信息保护法》",
+        "action": "在数据库层面对敏感字段实施AES-256加密，确保即使数据库被非法访问，数据也无法直接读取",
+        "deadline": "上线前必须完成"
+      },
+      {
+        "id": "B-002",
+        "title": "隐私政策不完善",
+        "description": "未制定符合《个人信息保护法》要求的完整隐私政策，未明确数据收集范围、使用目的、存储期限等关键信息",
+        "severity": "高危",
+        "impact": "无法通过应用商店审核，面临监管处罚风险，用户信任度低",
+        "action": "制定完整隐私政策，包含所有必要条款，在APP内展示并获取用户明确同意",
+        "deadline": "上线前必须完成"
+      },
+      {
+        "id": "B-003",
+        "title": "敏感信息单独同意（已落地留痕）",
+        "description": "已新增授权页面与后端同意记录接口，并在AI/行程规划接口侧强制校验敏感信息与位置信息同意；仍需补齐隐私政策正文与版本管理细则",
+        "severity": "高危",
+        "impact": "已降低被动采集风险，但若缺少完整告知文本与审计留存仍存在合规隐患",
+        "action": "完善隐私政策正文与敏感信息告知文案；保留同意记录（时间/版本/范围），支持撤回",
+        "deadline": "已完成（待复核）"
+      },
+      {
+        "id": "B-004",
+        "title": "AI服务数据处理协议缺失",
+        "description": "与智谱AI(GLM-4.7)、MiniMax(M2.1)等第三方AI服务商未签署数据处理协议(DPA)",
+        "severity": "高危",
+        "impact": "用户健康数据可能被不当使用或泄露，无法证明合规性",
+        "action": "与AI服务商签署DPA，明确数据处理范围、安全要求、删除机制；评估服务商数据存储位置",
+        "deadline": "上线前必须完成"
+      },
+      {
+        "id": "B-005",
+        "title": "Token安全存储（移动端已加固）",
+        "description": "移动端已使用SecureStore/Keychain存储Token并避免AsyncStorage；Web演示仍为localStorage，生产需禁用或替换",
+        "severity": "高危",
+        "impact": "移动端风险显著降低；Web端若上生产仍存在Token被窃取风险",
+        "action": "生产环境统一安全存储策略，补齐Refresh Token轮换/撤销与异常检测",
+        "deadline": "已完成（移动端）/ Web待处理"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "I-001",
+        "title": "完善安全监控和日志审计体系",
+        "description": "当前仅有预发布环境监控配置，生产环境监控体系不完善；缺乏安全事件告警机制",
+        "severity": "中危",
+        "impact": "安全事件难以及时发现和响应，影响系统安全运营",
+        "action": "完善生产环境监控体系，配置安全事件实时告警，建立日志分析平台"
+      },
+      {
+        "id": "I-002",
+        "title": "加强API安全控制",
+        "description": "API限流配置不够细化，AI API调用缺乏应用层控制",
+        "severity": "低危",
+        "impact": "可能遭受DDoS攻击或API滥用，影响系统稳定性",
+        "action": "细化各API端点的限流配置，实现分布式限流，增加API调用异常检测"
+      },
+      {
+        "id": "I-003",
+        "title": "完善用户权利响应机制",
+        "description": "用户数据导出、账户注销功能待验证和优化",
+        "severity": "低危",
+        "impact": "无法满足《个人信息保护法》用户权利要求",
+        "action": "实现完整的数据导出功能(支持JSON/CSV格式)；完善账户注销流程，确保数据彻底删除"
+      },
+      {
+        "id": "I-004",
+        "title": "本地数据存储加固",
+        "description": "AsyncStorage存储敏感数据存在安全风险",
+        "severity": "低危",
+        "impact": "设备丢失或Root/越狱后数据可能被窃取",
+        "action": "对本地敏感数据加密，实现敏感数据自动清理，考虑远程擦除功能"
+      },
+      {
+        "id": "I-005",
+        "title": "完善安全审计日志",
+        "description": "全局缺乏安全相关审计日志",
+        "severity": "低危",
+        "impact": "安全事件难以溯源和调查",
+        "action": "建立统一安全审计日志系统，记录关键操作，日志保留至少180天"
+      },
+      {
+        "id": "I-006",
+        "title": "评估等级保护需求",
+        "description": "未评估系统是否需要进行网络安全等级保护定级",
+        "severity": "低危",
+        "impact": "可能不符合等级保护要求",
+        "action": "评估系统等级保护定级需求，如需要按照等级保护要求进行安全建设"
+      },
+      {
+        "id": "I-007",
+        "title": "加强分享功能安全",
+        "description": "行程分享链接使用6位share_code，安全性有待提升",
+        "severity": "低危",
+        "impact": "分享链接可能被暴力破解，导致行程数据泄露",
+        "action": "增加分享链接字符集长度，限制访问次数，增加IP绑定"
+      },
+      {
+        "id": "I-008",
+        "title": "完善短信验证码安全",
+        "description": "验证码发送虽有频率限制，但防暴力破解能力可加强",
+        "severity": "低危",
+        "impact": "可能遭受短信轰炸攻击或验证码暴力破解",
+        "action": "增加图形验证码或行为验证，实施IP级别限流，增强验证码尝试失败锁定机制"
+      }
+    ],
+    "audit_summary": {
+      "overall_status": "有条件通过",
+      "total_risks": 14,
+      "high_risks": 5,
+      "medium_risks": 6,
+      "low_risks": 3,
+      "compliance_score": "55%",
+      "security_score": "60%",
+      "key_findings": [
+        "敏感健康数据在数据库中明文存储，存在高危数据泄露风险",
+        "隐私政策不完善，未明确数据收集范围和使用目的",
+        "与第三方AI服务商未签署数据处理协议",
+        "已实现敏感信息与位置信息单独同意留痕与接口强制校验（仍需合规复核）",
+        "移动端Token已采用安全存储（Web演示仍需加固）"
+      ],
+      "critical_blockers": 3,
+      "recommended_improvements": 8,
+      "estimated_remediation_effort": "2-3周"
+    }
+  },
+  "errors": []
+}

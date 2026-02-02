@@ -1,0 +1,170 @@
+{
+  "meta": {
+    "agent": "门禁报告官",
+    "status": "ok",
+    "timestamp": "2026-01-25T09:45:00+08:00"
+  },
+  "data": {
+    "pass": false,
+    "risk_level": "high",
+    "must_fix": [
+      {
+        "id": "BLOCK-001",
+        "issue": "敏感健康数据未加密存储",
+        "severity": "critical",
+        "component": "数据存储模块",
+        "description": "医疗健康数据未经加密直接存储，存在数据泄露风险，违反《个人信息保护法》及《医疗数据安全管理规定》",
+        "deadline": "T+3工作日",
+        "owner": "后端安全组"
+      },
+      {
+        "id": "BLOCK-002",
+        "issue": "隐私政策不完善",
+        "severity": "critical",
+        "component": "法律合规模块",
+        "description": "现有隐私政策未完整披露AI服务数据处理方式、健康数据使用范围及第三方共享机制",
+        "deadline": "T+5工作日",
+        "owner": "法务合规组"
+      },
+      {
+        "id": "BLOCK-003",
+        "issue": "未获取敏感信息单独同意（已落地）",
+        "severity": "medium",
+        "component": "用户授权模块",
+        "description": "已实现敏感信息与位置信息的单独同意流程，并在AI/行程规划接口侧强制校验；仍需完善隐私政策正文与审计留存策略",
+        "deadline": "已完成（待复核）",
+        "owner": "产品研发组",
+        "status": "fixed_in_code"
+      },
+      {
+        "id": "BLOCK-004",
+        "issue": "AI服务数据处理协议缺失",
+        "severity": "critical",
+        "component": "第三方服务集成",
+        "description": "与AI服务提供商之间缺乏符合法规要求的数据处理协议(DPA)，未明确数据流向、存储期限及删除机制",
+        "deadline": "T+7工作日",
+        "owner": "商务法务组"
+      },
+      {
+        "id": "BLOCK-005",
+        "issue": "Token安全存储不足（移动端已加固）",
+        "severity": "medium",
+        "component": "认证授权模块",
+        "description": "移动端已采用SecureStore/Keychain存储Token并避免AsyncStorage；Web演示仍使用localStorage，生产需统一安全存储策略并补齐Refresh Token轮换/撤销",
+        "deadline": "已完成（移动端）/ Web待处理",
+        "owner": "安全研发组",
+        "status": "partially_fixed"
+      }
+    ],
+    "nice_to_have": [
+      {
+        "id": "SUGGEST-001",
+        "issue": "合规符合度提升至70%以上",
+        "description": "当前45%合规率需重点整改隐私保护、数据处理透明度等核心条款",
+        "priority": "high",
+        "suggested_deadline": "T+10工作日"
+      },
+      {
+        "id": "SUGGEST-002",
+        "issue": "安全评分提升至70分以上",
+        "description": "当前50分安全评分需加强身份认证、访问控制、日志审计等基础安全能力",
+        "priority": "high",
+        "suggested_deadline": "T+10工作日"
+      },
+      {
+        "id": "SUGGEST-003",
+        "issue": "补充数据脱敏处理",
+        "description": "日志记录、错误追踪中涉及用户健康信息时需实施脱敏处理",
+        "priority": "medium",
+        "suggested_deadline": "T+14工作日"
+      },
+      {
+        "id": "SUGGEST-004",
+        "issue": "完善数据删除机制",
+        "description": "用户行权(删除账户/数据)时需实现级联删除及第三方数据召回机制",
+        "priority": "medium",
+        "suggested_deadline": "T+14工作日"
+      },
+      {
+        "id": "SUGGEST-005",
+        "issue": "增强审计日志",
+        "description": "敏感数据访问操作需增加完整审计日志，支持事后追溯与合规审查",
+        "priority": "medium",
+        "suggested_deadline": "T+14工作日"
+      },
+      {
+        "id": "SUGGEST-006",
+        "issue": "API安全测试覆盖率提升",
+        "description": "当前安全测试发现2项中危漏洞，需全面梳理API鉴权、输入校验、会话管理",
+        "priority": "medium",
+        "suggested_deadline": "T+14工作日"
+      },
+      {
+        "id": "SUGGEST-007",
+        "issue": "性能测试优化",
+        "description": "12%性能指标未达标，需优化高并发场景下的响应时长与资源占用",
+        "priority": "low",
+        "suggested_deadline": "T+21工作日"
+      },
+      {
+        "id": "SUGGEST-008",
+        "issue": "补充安全培训",
+        "description": "研发团队需接受医疗数据安全、合规开发流程专项培训",
+        "priority": "low",
+        "suggested_deadline": "T+21工作日"
+      }
+    ],
+    "conditional_release": {
+      "enabled": true,
+      "conditions": [
+        "剩余3项阻塞问题（加密存储/隐私政策/DPA）必须在2-3周内完成整改",
+        "修复完成后需提交完整的安全复测报告",
+        "法务合规团队需重新审核隐私政策及AI服务数据处理协议",
+        "技术团队需提供敏感数据加密存储的技术验证报告，并对Token安全存储方案进行生产级复核"
+      ],
+      "release_scope": "禁止对外发布，可进行内部测试环境验证",
+      "recheck_deadline": "2026-02-13"
+    },
+    "summary": "医疗出行APP项目审计结论为'有条件通过'，经综合评估后不予放行。剩余核心风险集中在3项阻塞问题（敏感数据加密存储、隐私政策正文完善、AI服务数据处理协议DPA签署）。敏感信息单独同意与移动端Token安全存储已完成代码落地（待合规复核）。测试指标显示单元测试、API联调与E2E关键链路均可跑通，但仍需补齐安全中危漏洞修复与复测材料后重审。",
+    "tracking_items": [
+      {
+        "track_id": "TRACK-001",
+        "description": "T+3日：完成敏感数据加密存储及Token安全存储修复",
+        "checkpoint": "2026-01-28"
+      },
+      {
+        "track_id": "TRACK-002",
+        "description": "T+5日：完成隐私政策完善及敏感信息单独同意机制",
+        "checkpoint": "2026-01-30"
+      },
+      {
+        "track_id": "TRACK-003",
+        "description": "T+7日：完成AI服务数据处理协议签署",
+        "checkpoint": "2026-02-01"
+      },
+      {
+        "track_id": "TRACK-004",
+        "description": "T+10日：完成合规符合度及安全评分自检达标",
+        "checkpoint": "2026-02-04"
+      },
+      {
+        "track_id": "TRACK-005",
+        "description": "T+14日：完成全部建议改进项",
+        "checkpoint": "2026-02-08"
+      },
+      {
+        "track_id": "TRACK-006",
+        "description": "T+21日：提交完整复测报告，申请重新门禁审核",
+        "checkpoint": "2026-02-15"
+      }
+    ],
+    "signatures": {
+      "auditor": "门禁报告官 MiniMax-M2.1",
+      "reviewer": "",
+      "approver": "",
+      "issue_date": "2026-01-23",
+      "effective_date": "2026-01-23"
+    }
+  },
+  "errors": []
+}

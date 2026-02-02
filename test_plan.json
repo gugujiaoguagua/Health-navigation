@@ -1,0 +1,1602 @@
+{
+  "meta": {
+    "agent": "测试与验收官",
+    "status": "ok",
+    "timestamp": "2026-01-23T10:30:00.000Z",
+    "project": "医疗出行助手",
+    "version": "1.0.0"
+  },
+  "data": {
+    "test_strategy": {
+      "overview": {
+        "project_name": "医疗出行助手",
+        "test_scope": "全模块端到端测试",
+        "test_approach": "金字塔测试策略",
+        "testing_levels": [
+          {
+            "level": "单元测试",
+            "coverage_target": "后端>=80%，前端>=70%",
+            "tools": ["Jest", "React Testing Library", "Mocha"],
+            "priority": "高",
+            "execution_time": "开发阶段持续执行"
+          },
+          {
+            "level": "集成测试",
+            "coverage_target": "核心API路径100%覆盖",
+            "tools": ["Supertest", "Postman", "Newman"],
+            "priority": "高",
+            "execution_time": "每日CI/CD流水线执行"
+          },
+          {
+            "level": "E2E测试",
+            "coverage_target": "核心用户流程100%覆盖",
+            "tools": ["Detox", "Appium", "Cypress"],
+            "priority": "中",
+            "execution_time": "每周完整回归测试"
+          },
+          {
+            "level": "性能测试",
+            "target_response_time": "<500ms（API）",
+            "tools": ["k6", "Apache JMeter", "Loader.io"],
+            "priority": "中",
+            "execution_time": "发布前完整测试"
+          },
+          {
+            "level": "兼容性测试",
+            "coverage": "iOS 12+、Android 8+主流设备",
+            "tools": ["BrowserStack", "Sauce Labs", "Firebase Test Lab"],
+            "priority": "中",
+            "execution_time": "发布前完整测试"
+          }
+        ]
+      },
+      "test_principles": [
+        "测试左移原则，测试参与需求评审和设计评审",
+        "自动化优先，核心流程必须自动化",
+        "持续集成，每次代码提交触发测试",
+        "风险驱动，优先测试高风险功能",
+        "可追溯性，测试用例与需求双向关联"
+      ],
+      "quality_gates": [
+        "单元测试覆盖率不低于75%",
+        "所有关键路径测试通过率100%",
+        "无严重级别以上缺陷",
+        "API响应时间P95<500ms",
+        "安全扫描无高危漏洞"
+      ]
+    },
+    "test_environment": {
+      "development": {
+        "backend": {
+          "runtime": "Node.js 18.x",
+          "framework": "Express.js",
+          "database": "MongoDB 6.0",
+          "cache": "Redis 7.0",
+          "host": "http://localhost:3000"
+        },
+        "frontend": {
+          "framework": "React Native 0.72",
+          "platforms": ["iOS Simulator", "Android Emulator"],
+          "host": "exp://localhost:8081"
+        },
+        "services": {
+          "ai_service": "本地Mock服务",
+          "notification": "Console输出",
+          "payment": "沙箱模式"
+        }
+      },
+      "staging": {
+        "backend": {
+          "runtime": "Node.js 18.x",
+          "framework": "Express.js",
+          "database": "MongoDB Atlas",
+          "cache": "Redis Cloud",
+          "host": "https://staging-api.medical-travel.com"
+        },
+        "frontend": {
+          "framework": "React Native 0.72",
+          "platforms": ["iOS 15/16/17", "Android 10/11/12/13"],
+          "distribution": "TestFlight / Google Play Internal"
+        },
+        "services": {
+          "ai_service": "OpenAI API（测试额度）",
+          "notification": "真实推送服务",
+          "payment": "Stripe沙箱"
+        },
+        "monitoring": {
+          "logging": "ELK Stack",
+          "metrics": "Prometheus + Grafana",
+          "apm": "New Relic"
+        }
+      },
+      "production_equivalent": {
+        "backend": {
+          "runtime": "Node.js 18.x (Docker)",
+          "database": "MongoDB Atlas副本集",
+          "cache": "Redis Cluster",
+          "host": "负载均衡后端"
+        },
+        "frontend": {
+          "distribution": "App Store / Google Play",
+          "cdn": "CloudFront"
+        }
+      },
+      "test_data_management": {
+        "strategy": "自动化数据准备 + 工厂模式",
+        "data_sources": [
+          "Mockaroo生成测试数据",
+          "生产数据脱敏导入",
+          "API自动创建测试账户"
+        ],
+        "data_cleanup": "测试后自动清理，隔离环境独立部署"
+      },
+      "ci_cd_pipeline": {
+        "stage_1": "代码提交触发单元测试和代码质量扫描",
+        "stage_2": "合并到开发分支触发集成测试",
+        "stage_3": "发布到预发布环境触发E2E测试",
+        "stage_4": "发布候选版本触发完整回归和性能测试",
+        "stage_5": "生产发布前最终验证"
+      }
+    },
+    "test_cases": {
+      "m1_auth_infrastructure": {
+        "module": "M1: 用户认证与基础设施",
+        "test_count": 45,
+        "priority_distribution": {
+          "P0_critical": 12,
+          "P1_high": 18,
+          "P2_medium": 15
+        },
+        "test_cases": [
+          {
+            "id": "M1-TC001",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "用户注册 - 有效手机号注册成功",
+            "precondition": "用户未注册，测试手机号可用",
+            "steps": [
+              "打开APP进入注册页面",
+              "输入有效手机号格式：13800138000",
+              "点击获取验证码按钮",
+              "输入收到的6位验证码",
+              "设置密码：Test@123456",
+              "确认密码并提交"
+            ],
+            "expected_result": "注册成功，自动跳转到首页，用户收到欢迎通知",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_001"
+          },
+          {
+            "id": "M1-TC002",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "用户注册 - 无效手机号验证",
+            "precondition": "用户未注册",
+            "steps": [
+              "打开APP进入注册页面",
+              "输入无效手机号：1234567890",
+              "尝试点击获取验证码按钮"
+            ],
+            "expected_result": "系统提示手机号格式不正确，阻止验证码发送",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_001"
+          },
+          {
+            "id": "M1-TC003",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "用户登录 - 正确密码登录成功",
+            "precondition": "用户已注册",
+            "steps": [
+              "打开APP进入登录页面",
+              "输入已注册手机号",
+              "输入正确密码",
+              "点击登录按钮"
+            ],
+            "expected_result": "登录成功，跳转到首页，显示用户信息",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_001"
+          },
+          {
+            "id": "M1-TC004",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "用户登录 - 错误密码保护",
+            "precondition": "用户已注册，密码为Test@123456",
+            "steps": [
+              "打开APP进入登录页面",
+              "输入已注册手机号",
+              "输入错误密码：Wrong@123",
+              "点击登录按钮",
+              "重复错误登录5次"
+            ],
+            "expected_result": "前5次提示密码错误，第5次后账户锁定30分钟",
+            "automation_status": "半自动化",
+            "assigned_to": "backend_dev_001"
+          },
+          {
+            "id": "M1-TC005",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "密码强度验证",
+            "precondition": "用户在注册/修改密码页面",
+            "steps": [
+              "尝试输入弱密码：123456",
+              "尝试输入中等密码：Test123",
+              "尝试输入强密码：Test@123456"
+            ],
+            "expected_result": "弱密码提示必须包含大小写字母和数字，中等密码提示缺少特殊字符，强密码通过",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_001"
+          },
+          {
+            "id": "M1-TC006",
+            "category": "安全测试",
+            "priority": "P0",
+            "title": "JWT Token有效期验证",
+            "precondition": "用户已登录获取Token",
+            "steps": [
+              "用户登录获取Access Token和Refresh Token",
+              "记录Access Token创建时间",
+              "等待Token过期（模拟）",
+              "使用过期Token访问受保护API"
+            ],
+            "expected_result": "系统返回401未授权，提示Token已过期",
+            "automation_status": "自动化",
+            "assigned_to": "security_001"
+          },
+          {
+            "id": "M1-TC007",
+            "category": "安全测试",
+            "priority": "P0",
+            "title": "Refresh Token轮换机制",
+            "precondition": "用户已登录",
+            "steps": [
+              "用户登录获取Token对",
+              "调用刷新Token API",
+              "验证新的Token对生成",
+              "尝试使用旧的Refresh Token"
+            ],
+            "expected_result": "新的Token对生成，旧的Refresh Token失效（单设备登录场景）",
+            "automation_status": "自动化",
+            "assigned_to": "security_001"
+          },
+          {
+            "id": "M1-TC008",
+            "category": "异常测试",
+            "priority": "P1",
+            "title": "重复手机号注册",
+            "precondition": "手机号13800138000已注册",
+            "steps": [
+              "尝试使用已注册手机号13800138000重新注册"
+            ],
+            "expected_result": "系统提示该手机号已注册，引导用户登录",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_001"
+          },
+          {
+            "id": "M1-TC009",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "验证码有效期验证",
+            "precondition": "用户请求发送验证码",
+            "steps": [
+              "请求发送验证码",
+              "等待5分钟",
+              "尝试使用验证码"
+            ],
+            "expected_result": "验证码过期，无法用于注册/登录",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_001"
+          },
+          {
+            "id": "M1-TC010",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "退出登录功能",
+            "precondition": "用户已登录",
+            "steps": [
+              "在用户中心点击退出登录",
+              "确认退出"
+            ],
+            "expected_result": "用户退出登录，跳转到登录页面，本地Token清除",
+            "automation_status": "自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M1-TC011",
+            "category": "性能测试",
+            "priority": "P1",
+            "title": "登录接口并发性能",
+            "precondition": "准备100个测试账户",
+            "steps": [
+              "配置100个并发用户",
+              "同时发起登录请求",
+              "记录响应时间和成功率"
+            ],
+            "expected_result": "100%请求成功，P95响应时间<500ms",
+            "automation_status": "自动化",
+            "assigned_to": "performance_001"
+          },
+          {
+            "id": "M1-TC012",
+            "category": "安全测试",
+            "priority": "P0",
+            "title": "SQL注入防护",
+            "precondition": "登录/注册接口可用",
+            "steps": [
+              "在手机号输入框输入：' OR '1'='1",
+              "在密码输入框输入：' OR '1'='1"
+            ],
+            "expected_result": "系统拒绝请求，返回参数错误",
+            "automation_status": "自动化",
+            "assigned_to": "security_001"
+          }
+        ]
+      },
+      "m3_ai_symptom_analysis": {
+        "module": "M3: AI服务集成与症状分析",
+        "test_count": 50,
+        "priority_distribution": {
+          "P0_critical": 10,
+          "P1_high": 25,
+          "P2_medium": 15
+        },
+        "test_cases": [
+          {
+            "id": "M3-TC001",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "症状分析 - 有效症状描述",
+            "precondition": "用户已登录，AI服务可用",
+            "steps": [
+              "进入症状分析页面",
+              "输入症状：持续性头痛，伴有恶心和视力模糊",
+              "选择症状持续时间：3天",
+              "提交分析请求"
+            ],
+            "expected_result": "系统返回分析结果，包含可能病因、建议科室、紧急程度",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_003"
+          },
+          {
+            "id": "M3-TC002",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "症状分析 - 紧急症状识别",
+            "precondition": "用户已登录，AI服务可用",
+            "steps": [
+              "进入症状分析页面",
+              "输入紧急症状：胸痛伴呼吸困难",
+              "提交分析请求"
+            ],
+            "expected_result": "系统识别为紧急情况，提示立即就医，显示最近的急诊位置",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_003"
+          },
+          {
+            "id": "M3-TC003",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "症状分析 - 多症状组合",
+            "precondition": "用户已登录",
+            "steps": [
+              "输入多个症状描述",
+              "验证系统处理复杂输入"
+            ],
+            "expected_result": "系统分析所有症状，提供综合建议",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_003"
+          },
+          {
+            "id": "M3-TC004",
+            "category": "异常测试",
+            "priority": "P0",
+            "title": "症状分析 - 空输入处理",
+            "precondition": "用户已登录",
+            "steps": [
+              "不输入任何症状",
+              "提交分析请求"
+            ],
+            "expected_result": "系统提示请输入症状描述",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_003"
+          },
+          {
+            "id": "M3-TC005",
+            "category": "异常测试",
+            "priority": "P1",
+            "title": "症状分析 - AI服务超时",
+            "precondition": "模拟AI服务延迟",
+            "steps": [
+              "发起症状分析请求",
+              "等待超时时间（30秒）"
+            ],
+            "expected_result": "系统返回超时提示，建议稍后重试",
+            "automation_status": "半自动化",
+            "assigned_to": "backend_dev_003"
+          },
+          {
+            "id": "M3-TC006",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "症状分析 - 历史记录查询",
+            "precondition": "用户有历史分析记录",
+            "steps": [
+              "进入历史记录页面",
+              "查看历史分析结果"
+            ],
+            "expected_result": "显示所有历史分析记录，支持按时间筛选",
+            "automation_status": "自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M3-TC007",
+            "category": "安全测试",
+            "priority": "P0",
+            "title": "敏感症状数据加密",
+            "precondition": "网络抓包工具准备",
+            "steps": [
+              "发起症状分析请求",
+              "使用抓包工具检查传输数据"
+            ],
+            "expected_result": "所有症状数据使用HTTPS加密传输，不包含明文敏感信息",
+            "automation_status": "半自动化",
+            "assigned_to": "security_001"
+          },
+          {
+            "id": "M3-TC008",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "症状分析 - 语音输入支持",
+            "precondition": "语音输入功能可用",
+            "steps": [
+              "点击语音输入按钮",
+              "朗读症状描述",
+              "验证语音转文字结果"
+            ],
+            "expected_result": "语音准确转换为文字，准确率>95%",
+            "automation_status": "半自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M3-TC009",
+            "category": "性能测试",
+            "priority": "P1",
+            "title": "症状分析响应时间",
+            "precondition": "AI服务正常运行",
+            "steps": [
+              "发起10次症状分析请求",
+              "记录每次响应时间"
+            ],
+            "expected_result": "P95响应时间<5秒，90%请求<3秒",
+            "automation_status": "自动化",
+            "assigned_to": "performance_001"
+          },
+          {
+            "id": "M3-TC010",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "科室推荐功能",
+            "precondition": "症状分析完成",
+            "steps": [
+              "进行症状分析",
+              "验证推荐科室列表"
+            ],
+            "expected_result": "推荐相关科室，包含科室描述和擅长疾病",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_003"
+          },
+          {
+            "id": "M3-TC011",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "症状分析结果分享",
+            "precondition": "分析结果可用",
+            "steps": [
+              "完成症状分析",
+              "点击分享按钮",
+              "选择分享方式"
+            ],
+            "expected_result": "生成可分享的结果链接或图片",
+            "automation_status": "半自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M3-TC012",
+            "category": "测试类型",
+            "priority": "P0",
+            "title": "AI服务Mock验证",
+            "precondition": "开发环境配置完成",
+            "steps": [
+              "配置AI服务为Mock模式",
+              "发起症状分析请求",
+              "验证Mock返回预期结果"
+            ],
+            "expected_result": "Mock服务按预期返回测试数据",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_003"
+          }
+        ]
+      },
+      "m5_trip_planning": {
+        "module": "M5: 行程规划引擎",
+        "test_count": 55,
+        "priority_distribution": {
+          "P0_critical": 15,
+          "P1_high": 25,
+          "P2_medium": 15
+        },
+        "test_cases": [
+          {
+            "id": "M5-TC001",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "创建行程 - 基本信息",
+            "precondition": "用户已登录",
+            "steps": [
+              "进入行程规划页面",
+              "点击创建新行程",
+              "输入目的地：上海",
+              "选择出行日期范围",
+              "选择出行人数：2",
+              "选择就医目的"
+            ],
+            "expected_result": "行程创建成功，进入行程编辑页面",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC002",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "行程规划 - 智能推荐",
+            "precondition": "行程已创建",
+            "steps": [
+              "进入行程编辑页面",
+              "点击智能推荐",
+              "选择医院：上海华山医院",
+              "选择期望就诊日期"
+            ],
+            "expected_result": "系统生成推荐行程，包含交通、住宿建议",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC003",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "行程规划 - 医院预约整合",
+            "precondition": "行程包含就医安排",
+            "steps": [
+              "在行程中添加医院预约",
+              "选择科室和医生",
+              "确认预约时间"
+            ],
+            "expected_result": "预约成功添加，行程时间线自动调整",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC004",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "行程规划 - 住宿预订整合",
+            "precondition": "行程有住宿需求",
+            "steps": [
+              "添加住宿安排",
+              "选择酒店",
+              "选择入住退房日期"
+            ],
+            "expected_result": "住宿预订成功，显示在行程中",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC005",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "行程规划 - 餐饮推荐整合",
+            "precondition": "行程有餐饮需求",
+            "steps": [
+              "添加餐饮安排",
+              "选择餐厅或订餐"
+            ],
+            "expected_result": "餐饮安排成功添加到行程",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC006",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "行程时间线视图",
+            "precondition": "行程有多项安排",
+            "steps": [
+              "创建包含多项活动的行程",
+              "切换到时间线视图"
+            ],
+            "expected_result": "按时间顺序显示所有活动，支持日/周视图切换",
+            "automation_status": "自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M5-TC007",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "行程编辑功能",
+            "precondition": "行程已创建",
+            "steps": [
+              "修改行程日期",
+              "添加新活动",
+              "删除已有活动",
+              "调整活动时间"
+            ],
+            "expected_result": "行程自动重新计算，显示更新后的摘要",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC008",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "行程冲突检测",
+            "precondition": "行程中有重叠安排",
+            "steps": [
+              "添加两个时间重叠的活动",
+              "观察系统提示"
+            ],
+            "expected_result": "系统检测到冲突并提示用户",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC009",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "行程分享功能",
+            "precondition": "行程已创建",
+            "steps": [
+              "点击分享按钮",
+              "生成分享链接",
+              "使用另一设备访问链接"
+            ],
+            "expected_result": "生成可查看的分享链接（只读权限）",
+            "automation_status": "半自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC010",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "行程模板保存",
+            "precondition": "用户有完整行程",
+            "steps": [
+              "完成行程规划",
+              "保存为模板"
+            ],
+            "expected_result": "行程保存为模板，可在下次快速复用",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC011",
+            "category": "异常测试",
+            "priority": "P0",
+            "title": "行程日期冲突处理",
+            "precondition": "用户有多个行程",
+            "steps": [
+              "尝试创建时间重叠的两个行程"
+            ],
+            "expected_result": "系统提示日期冲突，建议调整",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC012",
+            "category": "性能测试",
+            "priority": "P1",
+            "title": "行程规划计算性能",
+            "precondition": "复杂行程需求",
+            "steps": [
+              "创建含10+活动的行程",
+              "触发智能规划",
+              "记录计算时间"
+            ],
+            "expected_result": "规划计算<3秒，结果合理无冲突",
+            "automation_status": "自动化",
+            "assigned_to": "performance_001"
+          },
+          {
+            "id": "M5-TC013",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "行程预算计算",
+            "precondition": "行程有费用项目",
+            "steps": [
+              "添加各项费用预估",
+              "查看预算总表"
+            ],
+            "expected_result": "自动计算总预算，按类别分项展示",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          },
+          {
+            "id": "M5-TC014",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "天气信息集成",
+            "precondition": "行程有出行日期",
+            "steps": [
+              "查看行程天气信息"
+            ],
+            "expected_result": "显示目的地出行日期天气预报",
+            "automation_status": "半自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M5-TC015",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "交通方式选择",
+            "precondition": "行程有异地移动",
+            "steps": [
+              "添加城市间移动",
+              "比较不同交通方式",
+              "选择火车出行"
+            ],
+            "expected_result": "显示火车时刻表，选择后加入行程",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_005"
+          }
+        ]
+      },
+      "m9_checklist": {
+        "module": "M9: 清单生成引擎",
+        "test_count": 40,
+        "priority_distribution": {
+          "P0_critical": 10,
+          "P1_high": 20,
+          "P2_medium": 10
+        },
+        "test_cases": [
+          {
+            "id": "M9-TC001",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "智能清单生成",
+            "precondition": "行程单已生成",
+            "steps": [
+              "进入清单页面",
+              "点击生成清单",
+              "选择出行类型：就医"
+            ],
+            "expected_result": "生成完整出行清单，按类别组织",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC002",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "清单-医疗资料",
+            "precondition": "就医行程",
+            "steps": [
+              "查看医疗资料清单",
+              "检查必要项目"
+            ],
+            "expected_result": "包含：病历、医保卡、身份证、药物清单等",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC003",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "清单-个人物品",
+            "precondition": "生成清单中",
+            "steps": [
+              "查看个人物品清单"
+            ],
+            "expected_result": "包含：换洗衣物、洗漱用品、电子设备等",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC004",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "清单项目勾选",
+            "precondition": "清单已生成",
+            "steps": [
+              "点击勾选已完成项目",
+              "查看完成进度"
+            ],
+            "expected_result": "项目状态更新，完成百分比同步计算",
+            "automation_status": "自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M9-TC005",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "自定义清单项目",
+            "precondition": "清单已生成",
+            "steps": [
+              "添加自定义项目",
+              "设置分类和优先级"
+            ],
+            "expected_result": "自定义项目添加成功",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC006",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "清单分类筛选",
+            "precondition": "清单有多项",
+            "steps": [
+              "按分类筛选查看",
+              "按状态筛选"
+            ],
+            "expected_result": "正确显示筛选结果",
+            "automation_status": "自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M9-TC007",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "清单项目排序",
+            "precondition": "清单有多项",
+            "steps": [
+              "拖拽调整项目顺序",
+              "按优先级自动排序"
+            ],
+            "expected_result": "项目顺序按要求更新",
+            "automation_status": "半自动化",
+            "assigned_to": "frontend_dev_001"
+          },
+          {
+            "id": "M9-TC008",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "清单导出",
+            "precondition": "清单已生成",
+            "steps": [
+              "导出清单为文本",
+              "分享清单"
+            ],
+            "expected_result": "成功导出和分享",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC009",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "清单模板管理",
+            "precondition": "用户有自定义模板",
+            "steps": [
+              "保存当前清单为模板",
+              "从模板创建新清单"
+            ],
+            "expected_result": "模板保存成功，可复用",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC010",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "季节性物品推荐",
+            "precondition": "行程在不同季节",
+            "steps": [
+              "设置出行季节",
+              "查看推荐物品"
+            ],
+            "expected_result": "根据季节推荐适当物品",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC011",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "特殊需求清单定制",
+            "precondition": "用户有特殊需求",
+            "steps": [
+              "设置特殊需求：轮椅、翻译",
+              "查看定制清单"
+            ],
+            "expected_result": "清单包含相关特殊需求物品和建议",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_009"
+          },
+          {
+            "id": "M9-TC012",
+            "category": "异常测试",
+            "priority": "P0",
+            "title": "清单数据丢失保护",
+            "precondition": "清单正在编辑",
+            "steps": [
+              "模拟网络中断",
+              "恢复网络",
+              "检查数据是否丢失"
+            ],
+            "expected_result": "本地缓存保护，数据自动同步恢复",
+            "automation_status": "半自动化",
+            "assigned_to": "backend_dev_009"
+          }
+        ]
+      },
+      "m10_user_center": {
+        "module": "M10: 用户中心",
+        "test_count": 40,
+        "priority_distribution": {
+          "P0_critical": 8,
+          "P1_high": 22,
+          "P2_medium": 10
+        },
+        "test_cases": [
+          {
+            "id": "M10-TC001",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "用户信息查看",
+            "precondition": "用户已登录",
+            "steps": [
+              "进入用户中心",
+              "查看个人信息"
+            ],
+            "expected_result": "显示用户头像、昵称、手机号、注册时间",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC002",
+            "category": "功能测试",
+            "priority": "P0",
+            "title": "用户信息修改",
+            "precondition": "用户已登录",
+            "steps": [
+              "编辑昵称",
+              "上传头像",
+              "保存修改"
+            ],
+            "expected_result": "信息修改成功，更新显示",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC003",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "密码修改",
+            "precondition": "用户已登录",
+            "steps": [
+              "进入修改密码页面",
+              "输入旧密码和新密码",
+              "确认修改"
+            ],
+            "expected_result": "密码修改成功，需重新登录",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC004",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "手机号更换",
+            "precondition": "用户已登录",
+            "steps": [
+              "申请更换手机号",
+              "验证原手机号",
+              "输入新手机号并验证"
+            ],
+            "expected_result": "手机号更换成功",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC005",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "行程历史查看",
+            "precondition": "用户有历史行程",
+            "steps": [
+              "进入行程历史",
+              "查看行程列表"
+            ],
+            "expected_result": "显示所有历史行程，支持筛选和搜索",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC006",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "订单历史查看",
+            "precondition": "用户有订单",
+            "steps": [
+              "进入订单历史",
+              "查看各类订单"
+            ],
+            "expected_result": "显示酒店、订餐等所有订单",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC007",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "收藏管理",
+            "precondition": "用户有收藏内容",
+            "steps": [
+              "查看收藏列表",
+              "取消收藏",
+              "分类查看"
+            ],
+            "expected_result": "收藏管理功能正常",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC008",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "健康档案管理",
+            "precondition": "用户已添加健康信息",
+            "steps": [
+              "添加血型",
+              "添加过敏史",
+              "添加既往病史"
+            ],
+            "expected_result": "健康档案保存成功",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC009",
+            "category": "功能测试",
+            "priority": "P2",
+            "title": "紧急联系人管理",
+            "precondition": "用户已登录",
+            "steps": [
+              "添加紧急联系人",
+              "设置关系和电话"
+            ],
+            "expected_result": "紧急联系人保存成功",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC010",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "消息通知设置",
+            "precondition": "用户已登录",
+            "steps": [
+              "进入通知设置",
+              "开关各类通知"
+            ],
+            "expected_result": "通知设置保存成功",
+            "automation_status": "自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC011",
+            "category": "功能测试",
+            "priority": "P1",
+            "title": "账户注销",
+            "precondition": "用户申请注销",
+            "steps": [
+              "申请账户注销",
+              "验证身份",
+              "确认注销"
+            ],
+            "expected_result": "账户注销成功，所有数据按政策处理",
+            "automation_status": "半自动化",
+            "assigned_to": "backend_dev_010"
+          },
+          {
+            "id": "M10-TC012",
+            "category": "安全测试",
+            "priority": "P0",
+            "title": "隐私数据保护",
+            "precondition": "用户数据存在",
+            "steps": [
+              "检查API响应",
+              "验证数据脱敏"
+            ],
+            "expected_result": "敏感信息脱敏展示，API不返回完整敏感数据",
+            "automation_status": "自动化",
+            "assigned_to": "security_001"
+          }
+        ]
+      }
+    },
+    "acceptance_criteria": {
+      "functional": [
+        {
+          "id": "AC-F-001",
+          "category": "功能验收",
+          "criterion": "用户认证模块",
+          "description": "用户可以成功注册、登录、登出，密码找回功能正常，登录失败锁定机制生效",
+          "verification_method": "功能测试通过率100%，安全测试无漏洞",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-002",
+          "category": "功能验收",
+          "criterion": "AI症状分析模块",
+          "description": "用户输入症状后，AI能在5秒内返回分析结果，包含可能病因、推荐科室、紧急程度判断",
+          "verification_method": "响应时间测试，AI结果准确性评估",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-003",
+          "category": "功能验收",
+          "criterion": "医院数据模块",
+          "description": "用户可以搜索、筛选医院，查看医院详情、医生排班、用户评价",
+          "verification_method": "搜索功能测试，数据完整性验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-004",
+          "category": "功能验收",
+          "criterion": "行程规划模块",
+          "description": "用户可以创建完整就医行程，包含医院预约、酒店预订、餐饮安排，系统自动优化时间冲突",
+          "verification_method": "端到端流程测试，行程冲突检测验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-005",
+          "category": "功能验收",
+          "criterion": "住宿服务模块",
+          "description": "用户可以搜索、比较、预订医院周边酒店，支持在线支付和订单管理",
+          "verification_method": "预订流程测试，支付流程验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-006",
+          "category": "功能验收",
+          "criterion": "餐饮服务模块",
+          "description": "用户可以搜索餐厅、在线订餐，支持送餐到病房和特殊饮食需求",
+          "verification_method": "订餐流程测试，特殊需求筛选验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-007",
+          "category": "功能验收",
+          "criterion": "行程单管理模块",
+          "description": "用户可以导出行程单为PDF，同步到日历，支持分享和打印",
+          "verification_method": "导出功能测试，日历同步验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-008",
+          "category": "功能验收",
+          "criterion": "清单生成模块",
+          "description": "系统根据行程自动生成出行清单，包含医疗资料、个人物品，支持勾选追踪",
+          "verification_method": "清单生成测试，勾选功能验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-009",
+          "category": "功能验收",
+          "criterion": "用户中心模块",
+          "description": "用户可以管理个人信息、健康档案、紧急联系人，查看历史行程和订单",
+          "verification_method": "用户信息管理测试，数据展示验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-F-010",
+          "category": "功能验收",
+          "criterion": "消息通知模块",
+          "description": "用户可以接收订单状态、预约提醒、行程通知，支持消息免打扰设置",
+          "verification_method": "推送测试，通知设置验证",
+          "pass_criteria": "✓"
+        }
+      ],
+      "performance": [
+        {
+          "id": "AC-P-001",
+          "category": "性能验收",
+          "criterion": "API响应时间",
+          "description": "核心API接口P95响应时间不超过500毫秒",
+          "verification_method": "使用k6进行负载测试，收集P95响应时间",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-P-002",
+          "category": "性能验收",
+          "criterion": "并发处理能力",
+          "description": "系统支持同时1000个用户在线操作，无明显性能下降",
+          "verification_method": "并发负载测试，记录错误率和响应时间",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-P-003",
+          "category": "性能验收",
+          "criterion": "AI分析响应",
+          "description": "AI症状分析功能P95响应时间不超过5秒",
+          "verification_method": "AI服务性能测试，记录响应时间分布",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-P-004",
+          "category": "性能验收",
+          "criterion": "页面加载速度",
+          "description": "APP首页加载时间不超过3秒",
+          "verification_method": "移动端性能测试，使用Firebase Performance",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-P-005",
+          "category": "性能验收",
+          "criterion": "数据库查询性能",
+          "description": "复杂查询响应时间不超过1秒",
+          "verification_method": "数据库慢查询监控，查询优化验证",
+          "pass_criteria": "✓"
+        }
+      ],
+      "security": [
+        {
+          "id": "AC-S-001",
+          "category": "安全验收",
+          "criterion": "身份认证安全",
+          "description": "JWT Token安全存储和传输，Refresh Token轮换机制正常，登录失败锁定生效",
+          "verification_method": "安全渗透测试，Token生命周期验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-S-002",
+          "category": "安全验收",
+          "criterion": "数据加密",
+          "description": "敏感数据（密码、支付信息、健康数据）加密存储和传输",
+          "verification_method": "数据加密检查，HTTPS配置验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-S-003",
+          "category": "安全验收",
+          "criterion": "SQL注入防护",
+          "description": "所有用户输入经过验证和过滤，防止SQL注入攻击",
+          "verification_method": "安全渗透测试，SQL注入尝试验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-S-004",
+          "category": "安全验收",
+          "criterion": "XSS防护",
+          "description": "防止跨站脚本攻击，用户输入内容正确转义",
+          "verification_method": "安全渗透测试，XSS攻击尝试验证",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-S-005",
+          "category": "安全验收",
+          "criterion": "API安全",
+          "description": "API接口有频率限制，敏感操作需要二次验证",
+          "verification_method": "API安全测试，限流机制验证",
+          "pass_criteria": "✓"
+        }
+      ],
+      "compatibility": [
+        {
+          "id": "AC-C-001",
+          "category": "兼容性验收",
+          "criterion": "iOS平台兼容",
+          "description": "APP在iOS 12及以上版本正常运行，UI显示正确",
+          "verification_method": "使用BrowserStack/Sauce Labs测试iOS 12/13/14/15/16/17",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-C-002",
+          "category": "兼容性验收",
+          "criterion": "Android平台兼容",
+          "description": "APP在Android 8及以上版本正常运行，UI显示正确",
+          "verification_method": "使用Firebase Test Lab测试Android 8/9/10/11/12/13",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-C-003",
+          "category": "兼容性验收",
+          "criterion": "屏幕尺寸适配",
+          "description": "APP在不同屏幕尺寸和分辨率下正常显示和操作",
+          "verification_method": "测试主流设备尺寸：iPhone SE到iPhone 14 Pro Max",
+          "pass_criteria": "✓"
+        }
+      ],
+      "usability": [
+        {
+          "id": "AC-U-001",
+          "category": "可用性验收",
+          "criterion": "核心流程完成率",
+          "description": "核心用户流程（新用户注册到完成首次行程规划）完成率不低于95%",
+          "verification_method": "用户验收测试，收集完成率和失败原因",
+          "pass_criteria": "✓"
+        },
+        {
+          "id": "AC-U-002",
+          "category": "可用性验收",
+          "criterion": "操作便捷性",
+          "description": "关键操作步骤不超过5步，常用功能可在3次点击内到达",
+          "verification_method": "用户体验测试，步骤计数验证",
+          "pass_criteria": "✓"
+        }
+      ]
+    },
+    "defect_management": {
+      "severity_levels": [
+        {
+          "level": "P0-Critical",
+          "description": "系统崩溃、数据丢失、安全漏洞、核心功能完全不可用",
+          "response_time": "2小时",
+          "resolution_target": "24小时",
+          "examples": ["用户无法注册/登录", "AI服务崩溃", "支付流程中断", "数据泄露"]
+        },
+        {
+          "level": "P1-High",
+          "description": "主要功能受损，但有变通方案，或性能严重下降",
+          "response_time": "4小时",
+          "resolution_target": "48小时",
+          "examples": ["搜索功能异常", "行程规划计算错误", "通知延迟超过5分钟"]
+        },
+        {
+          "level": "P2-Medium",
+          "description": "次要功能异常或界面显示问题，对用户影响有限",
+          "response_time": "8小时",
+          "resolution_target": "1周",
+          "examples": ["非核心功能显示异常", "非关键数据展示不完整", "边缘情况处理不当"]
+        },
+        {
+          "level": "P3-Low",
+          "description": "轻微问题、体验优化建议、文档错误",
+          "response_time": "24小时",
+          "resolution_target": "2周",
+          "examples": ["文案错误", "颜色对比度不足", "非关键路径UI优化"]
+        }
+      ],
+      "workflow": {
+        "states": ["New", "Assigned", "In Progress", "Review", "Verified", "Closed"],
+        "transitions": {
+          "New->Assigned": "测试人员提交缺陷后，自动分配给对应开发负责人",
+          "Assigned->In Progress": "开发人员开始处理缺陷",
+          "In Progress->Review": "开发人员完成修复，提交代码并关联缺陷",
+          "Review->Verified": "测试人员在原环境中验证修复",
+          "Review->In Progress": "修复未通过测试，打回重新处理",
+          "Verified->Closed": "缺陷状态变更为已关闭"
+        }
+      },
+      "reporting": {
+        "daily": {
+          "report_time": "每天上午10:00",
+          "content": ["新增缺陷数量", "关闭缺陷数量", "待处理缺陷分布", "严重缺陷进展"]
+        },
+        "weekly": {
+          "report_time": "每周一上午9:00",
+          "content": ["缺陷趋势分析", "模块缺陷分布", "回归测试结果", "风险预警"]
+        },
+        "milestone": {
+          "trigger": "每个里程碑节点",
+          "content": ["缺陷清零报告", "遗留缺陷分析", "质量评估报告"]
+        }
+      }
+    },
+    "test_progress_tracking": {
+      "phases": [
+        {
+          "phase": "Phase 1: 单元测试",
+          "duration": "开发阶段持续进行",
+          "start_criteria": "代码提交到开发分支",
+          "end_criteria": "单元测试覆盖率>=75%",
+          "metrics": ["代码覆盖率", "测试用例通过率", "测试执行时间"],
+          "responsible": "开发团队"
+        },
+        {
+          "phase": "Phase 2: 集成测试",
+          "duration": "每日CI/CD执行",
+          "start_criteria": "代码合并到开发分支",
+          "end_criteria": "所有API测试通过",
+          "metrics": ["API测试通过率", "接口响应时间", "错误日志"],
+          "responsible": "CI/CD系统 + 测试团队"
+        },
+        {
+          "phase": "Phase 3: E2E测试",
+          "duration": "每周完整回归",
+          "start_criteria": "发布到预发布环境",
+          "end_criteria": "核心流程100%通过",
+          "metrics": ["用户流程通过率", "缺陷数量", "测试执行时间"],
+          "responsible": "测试团队"
+        },
+        {
+          "phase": "Phase 4: 性能测试",
+          "duration": "发布前3天",
+          "start_criteria": "功能测试完成",
+          "end_criteria": "性能指标达标",
+          "metrics": ["响应时间", "并发能力", "资源使用率"],
+          "responsible": "性能测试工程师"
+        },
+        {
+          "phase": "Phase 5: 兼容性测试",
+          "duration": "发布前3天",
+          "start_criteria": "功能测试完成",
+          "end_criteria": "主流设备测试通过",
+          "metrics": ["设备覆盖率", "通过率", "失败原因分析"],
+          "responsible": "测试团队"
+        },
+        {
+          "phase": "Phase 6: UAT验收",
+          "duration": "发布前2天",
+          "start_criteria": "所有测试通过",
+          "end_criteria": "业务方确认通过",
+          "metrics": ["验收通过率", "用户反馈", "遗留问题"],
+          "responsible": "业务方 + 产品团队"
+        }
+      ],
+      "milestones": [
+        {
+          "milestone": "M1: 模块开发完成",
+          "target_date": "开发完成后1周内",
+          "criteria": ["模块单元测试通过率>=80%", "模块集成测试100%通过"],
+          "status": "pending"
+        },
+        {
+          "milestone": "M2: 功能完整",
+          "target_date": "全部模块开发完成后",
+          "criteria": ["所有模块测试通过", "无P0/P1级缺陷"],
+          "status": "pending"
+        },
+        {
+          "milestone": "M3: 性能达标",
+          "target_date": "发布前3天",
+          "criteria": ["API响应时间达标", "并发能力达标"],
+          "status": "pending"
+        },
+        {
+          "milestone": "M4: 兼容验证",
+          "target_date": "发布前2天",
+          "criteria": ["iOS主流版本通过", "Android主流版本通过"],
+          "status": "pending"
+        },
+        {
+          "milestone": "M5: UAT通过",
+          "target_date": "发布前1天",
+          "criteria": ["业务方验收通过", "所有验收标准满足"],
+          "status": "pending"
+        }
+      ],
+      "dashboard_metrics": [
+        "测试用例总数和执行进度",
+        "缺陷数量趋势和分布",
+        "测试覆盖率趋势",
+        "各模块质量评分",
+        "发布就绪状态"
+      ]
+    },
+    "risks_mitigation": {
+      "technical_risks": [
+        {
+          "risk": "AI服务响应不稳定",
+          "probability": "中",
+          "impact": "高",
+          "mitigation": [
+            "实现AI服务降级策略，返回预设建议",
+            "添加超时控制和重试机制",
+            "准备Mock数据支持离线测试"
+          ],
+          "contingency_plan": "临时切换到备用AI服务提供商"
+        },
+        {
+          "risk": "第三方服务API变更",
+          "probability": "低",
+          "impact": "高",
+          "mitigation": [
+            "使用接口适配层隔离第三方依赖",
+            "订阅官方变更通知",
+            "建立API版本管理机制"
+          ],
+          "contingency_plan": "快速开发适配新版本接口"
+        },
+        {
+          "risk": "React Native跨平台兼容性问题",
+          "probability": "中",
+          "impact": "中",
+          "mitigation": [
+            "使用React Native兼容性库",
+            "建立设备测试矩阵",
+            "关键功能原生备份方案"
+          ],
+          "contingency_plan": "针对问题平台开发原生页面"
+        },
+        {
+          "risk": "数据库性能瓶颈",
+          "probability": "低",
+          "impact": "高",
+          "mitigation": [
+            "实施数据库索引优化策略",
+            "引入缓存层减轻数据库压力",
+            "定期进行性能测试和调优"
+          ],
+          "contingency_plan": "快速扩展数据库资源并进行查询优化"
+        }
+      ],
+      "schedule_risks": [
+        {
+          "risk": "测试周期不足",
+          "probability": "高",
+          "impact": "中",
+          "mitigation": [
+            "提前准备测试环境和数据",
+            "自动化测试优先覆盖核心场景",
+            "并行进行多个模块测试"
+          ],
+          "contingency_plan": "识别最小可发布范围，延后非关键功能"
+        },
+        {
+          "risk": "缺陷修复延期",
+          "probability": "中",
+          "impact": "中",
+          "mitigation": [
+            "每日缺陷状态跟踪和预警",
+            "缺陷优先级排序，确保关键缺陷优先修复",
+            "建立快速响应机制"
+          ],
+          "contingency_plan": "调整发布范围或延后发布日期"
+        }
+      ],
+      "resource_risks": [
+        {
+          "risk": "关键测试人员不可用",
+          "probability": "低",
+          "impact": "高",
+          "mitigation": [
+            "交叉培训团队成员",
+            "文档化测试用例和流程",
+            "建立知识共享机制"
+          ],
+          "contingency_plan": "临时招聘或外包测试资源"
+        },
+        {
+          "risk": "测试环境资源不足",
+          "probability": "低",
+          "impact": "中",
+          "mitigation": [
+            "提前申请和配置测试资源",
+            "使用云服务弹性扩展",
+            "优化测试环境使用效率"
+          ],
+          "contingency_plan": "使用临时云资源补充"
+        }
+      ],
+      "external_risks": [
+        {
+          "risk": "法规合规变更",
+          "probability": "低",
+          "impact": "高",
+          "mitigation": [
+            "跟踪相关法规动态",
+            "预留合规适配时间",
+            "与法务团队保持沟通"
+          ],
+          "contingency_plan": "快速响应并调整功能以满足新要求"
+        },
+        {
+          "risk": "App Store/Google Play审核延迟",
+          "probability": "中",
+          "impact": "中",
+          "mitigation": [
+            "提前准备审核材料",
+            "遵守平台最新指南",
+            "建立紧急联系方式"
+          ],
+          "contingency_plan": "准备多个分发渠道"
+        }
+      ]
+    }
+  },
+  "errors": []
+}

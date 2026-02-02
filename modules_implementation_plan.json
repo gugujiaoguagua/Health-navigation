@@ -1,0 +1,1668 @@
+{
+  "meta": {
+    "agent": "工程方案官",
+    "status": "ok",
+    "timestamp": "2026-01-23T12:00:00.000Z"
+  },
+  "data": {
+    "module7_itinerary_management": {
+      "overview": {
+        "module_name": "行程单管理模块",
+        "module_id": "M7",
+        "description": "实现行程单的创建、查看、编辑、删除、分享等功能，串联行程规划全流程，是用户就医出行的核心管理功能",
+        "dependencies": ["M2(基础设施)", "M5(行程规划)", "M6(住宿餐饮)"],
+        "priority": "P1",
+        "estimated_workload": 5.5
+      },
+      "data_model": {
+        "Itinerary": {
+          "collection": "itineraries",
+          "description": "行程单主表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true, "description": "主键ID" },
+            "itinerary_id": { "type": "String", "required": true, "unique": true, "description": "行程单唯一标识" },
+            "user_id": { "type": "ObjectId", "required": true, "ref": "users", "description": "所属用户ID" },
+            "title": { "type": "String", "required": true, "max": 100, "description": "行程单标题" },
+            "hospital_id": { "type": "ObjectId", "ref": "hospitals", "description": "目标医院ID" },
+            "hospital_info": {
+              "type": "Object",
+              "required": true,
+              "fields": {
+                "name": { "type": "String", "required": true },
+                "level": { "type": "String" },
+                "address": { "type": "String" },
+                "phone": { "type": "String" }
+              },
+              "description": "医院冗余信息"
+            },
+            "departure_address": {
+              "type": "Object",
+              "required": true,
+              "fields": {
+                "address": { "type": "String", "required": true },
+                "coordinates": { "type": "Object", "fields": { "lng": "Number", "lat": "Number" } }
+              },
+              "description": "出发地址"
+            },
+            "destination_address": {
+              "type": "Object",
+              "required": true,
+              "fields": {
+                "address": { "type": "String", "required": true },
+                "coordinates": { "type": "Object", "fields": { "lng": "Number", "lat": "Number" } }
+              },
+              "description": "目的地地址"
+            },
+            "budget_level": { "type": "String", "enum": ["low", "mid", "high"], "required": true, "description": "预算档位" },
+            "departure_date": { "type": "Date", "required": true, "description": "出发日期" },
+            "return_date": { "type": "Date", "required": true, "description": "返程日期" },
+            "trip_days": { "type": "Number", "required": true, "min": 1, "description": "行程天数" },
+            "transportation": {
+              "type": "Object",
+              "required": true,
+              "fields": {
+                "type": { "type": "String", "enum": ["driving", "transit", "taxi", "walking"] },
+                "departure_time": { "type": "Date" },
+                "arrival_time": { "type": "Date" },
+                "duration": { "type": "Number", "description": "分钟" },
+                "distance": { "type": "Number", "description": "米" },
+                "cost": { "type": "Number", "description": "预估费用" },
+                "route_details": { "type": "Array", "description": "路线详情" }
+              },
+              "description": "交通方案"
+            },
+            "accommodation": {
+              "type": "Object",
+              "fields": {
+                "hotel_id": { "type": "String" },
+                "hotel_name": { "type": "String" },
+                "address": { "type": "String" },
+                "check_in_date": { "type": "Date" },
+                "check_out_date": { "type": "Date" },
+                "room_type": { "type": "String" },
+                "price_per_night": { "type": "Number" },
+                "total_price": { "type": "Number" },
+                "contact_phone": { "type": "String" },
+                "coordinates": { "type": "Object" }
+              },
+              "description": "住宿方案"
+            },
+            "dining": {
+              "type": "Array",
+              "description": "餐饮方案列表",
+              "items": {
+                "type": "Object",
+                "fields": {
+                  "restaurant_id": { "type": "String" },
+                  "restaurant_name": { "type": "String" },
+                  "address": { "type": "String" },
+                  "cuisine_type": { "type": "String" },
+                  "price_range": { "type": "String" },
+                  "avg_cost": { "type": "Number" },
+                  "rating": { "type": "Number" },
+                  "recommended_dishes": { "type": "Array" }
+                }
+              }
+            },
+            "status": {
+              "type": "String",
+              "enum": ["draft", "confirmed", "in_progress", "completed", "cancelled"],
+              "required": true,
+              "default": "draft",
+              "description": "行程状态"
+            },
+            "share_config": {
+              "type": "Object",
+              "fields": {
+                "is_shared": { "type": "Boolean", "default": false },
+                "share_code": { "type": "String" },
+                "share_expire_at": { "type": "Date" },
+                "view_count": { "type": "Number", "default": 0 }
+              },
+              "description": "分享配置"
+            },
+            "checklist_id": { "type": "ObjectId", "ref": "checklists", "description": "关联清单ID" },
+            "estimated_total_cost": { "type": "Number", "description": "预估总费用" },
+            "notes": { "type": "String", "max": 500, "description": "备注" },
+            "created_at": { "type": "Date", "required": true, "default": "Date.now" },
+            "updated_at": { "type": "Date", "required": true, "default": "Date.now" },
+            "confirmed_at": { "type": "Date", "description": "确认时间" },
+            "completed_at": { "type": "Date", "description": "完成时间" }
+          },
+          "indexes": [
+            { "fields": { "user_id": 1, "created_at": -1 } },
+            { "fields": { "user_id": 1, "status": 1 } },
+            { "fields": { "share_config.share_code": 1 }, "sparse": true },
+            { "fields": { "departure_date": 1 } }
+          ]
+        },
+        "ItineraryHistory": {
+          "collection": "itinerary_histories",
+          "description": "行程操作历史表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "itinerary_id": { "type": "String", "required": true },
+            "user_id": { "type": "ObjectId", "required": true },
+            "action": { "type": "String", "enum": ["create", "update", "status_change", "share", "export", "delete"] },
+            "action_detail": { "type": "String" },
+            "before_data": { "type": "Object" },
+            "after_data": { "type": "Object" },
+            "ip_address": { "type": "String" },
+            "device_info": { "type": "String" },
+            "created_at": { "type": "Date", "default": "Date.now" }
+          }
+        }
+      },
+      "api_routes": {
+        "base_path": "/api/v1/itineraries",
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/",
+            "description": "获取行程单列表",
+            "query_params": ["page", "limit", "status", "start_date", "end_date", "sort"],
+            "auth": true,
+            "response": { "list": "Array", "total": "Number", "page": "Number", "totalPages": "Number" }
+          },
+          {
+            "method": "GET",
+            "path": "/:itineraryId",
+            "description": "获取行程单详情",
+            "auth": true,
+            "response": "Itinerary对象"
+          },
+          {
+            "method": "POST",
+            "path": "/",
+            "description": "创建行程单",
+            "body": ["title", "hospital_info", "departure_address", "destination_address", "budget_level", "departure_date", "return_date"],
+            "auth": true,
+            "response": "Itinerary对象"
+          },
+          {
+            "method": "PUT",
+            "path": "/:itineraryId",
+            "description": "更新行程单",
+            "body": ["title", "hospital_info", "transportation", "accommodation", "dining", "notes"],
+            "auth": true,
+            "response": "Itinerary对象"
+          },
+          {
+            "method": "PATCH",
+            "path": "/:itineraryId/status",
+            "description": "更新行程状态",
+            "body": ["status"],
+            "auth": true,
+            "response": "Itinerary对象"
+          },
+          {
+            "method": "DELETE",
+            "path": "/:itineraryId",
+            "description": "删除行程单",
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "POST",
+            "path": "/:itineraryId/duplicate",
+            "description": "复制行程单",
+            "auth": true,
+            "response": "新Itinerary对象"
+          },
+          {
+            "method": "POST",
+            "path": "/:itineraryId/share",
+            "description": "生成分享链接",
+            "body": ["expire_hours"],
+            "auth": true,
+            "response": { "share_url": "String", "share_code": "String" }
+          },
+          {
+            "method": "GET",
+            "path": "/share/:shareCode",
+            "description": "通过分享码查看行程（无需登录）",
+            "response": "Itinerary对象（脱敏）"
+          },
+          {
+            "method": "POST",
+            "path": "/:itineraryId/export/pdf",
+            "description": "导出PDF",
+            "auth": true,
+            "response": { "download_url": "String" }
+          },
+          {
+            "method": "GET",
+            "path": "/:itineraryId/history",
+            "description": "获取操作历史",
+            "auth": true,
+            "response": { "list": "Array" }
+          }
+        ]
+      },
+      "business_logic": {
+        "create_itinerary": {
+          "flow": [
+            "1. 验证用户登录状态和权限",
+            "2. 校验必填字段：标题、医院信息、出发地、目的地、日期范围、预算档位",
+            "3. 计算行程天数",
+            "4. 初始化状态为draft",
+            "5. 调用清单生成服务自动创建关联清单",
+            "6. 保存行程单记录",
+            "7. 记录操作历史",
+            "8. 返回创建结果"
+          ],
+          "validation_rules": {
+            "departure_date": "必须大于等于当前日期",
+            "return_date": "必须大于出发日期",
+            "budget_level": "可选值：low/mid/high"
+          }
+        },
+        "update_itinerary": {
+          "flow": [
+            "1. 验证行程单存在性和归属权",
+            "2. 检查状态是否为draft（草稿状态可任意修改）",
+            "3. 非草稿状态只能修改notes和部分非核心字段",
+            "4. 记录更新前后数据对比",
+            "5. 如果修改了住宿餐饮，重新计算总费用",
+            "6. 更新updated_at时间戳",
+            "7. 保存更新并记录历史"
+          ],
+          "status_restrictions": {
+            "draft": "所有字段可修改",
+            "confirmed": "只能修改notes和个性化设置",
+            "in_progress": "只能修改住宿餐饮调整",
+            "completed": "只能查看和复制",
+            "cancelled": "不允许修改"
+          }
+        },
+        "status_transition": {
+          "allowed_transitions": {
+            "draft": ["confirmed", "cancelled"],
+            "confirmed": ["in_progress", "cancelled"],
+            "in_progress": ["completed"],
+            "completed": [],
+            "cancelled": []
+          },
+          "transition_actions": {
+            "confirmed": { "set_confirmed_at": true, "send_confirmation_notification": true },
+            "in_progress": { "notify_before_departure": true },
+            "completed": { "set_completed_at": true, "invite_feedback": true }
+          }
+        },
+        "share_itinerary": {
+          "flow": [
+            "1. 验证行程单归属权",
+            "2. 生成唯一share_code（6位数字字母组合）",
+            "3. 设置过期时间（默认7天，可配置）",
+            "4. 脱敏处理敏感信息（隐藏联系方式）",
+            "5. 记录分享操作",
+            "6. 返回分享链接和验证码"
+          ],
+          "desensitization_rules": {
+            "contact_phone": "只显示后4位",
+            "accommodation.contact_phone": "隐藏",
+            "user_info": "不返回"
+          }
+        },
+        "export_pdf": {
+          "flow": [
+            "1. 验证权限",
+            "2. 调用PDF生成服务",
+            "3. 渲染行程单模板",
+            "4. 生成PDF文件",
+            "5. 上传到七牛云OSS",
+            "6. 返回下载链接（有效期24小时）",
+            "7. 记录导出历史"
+          ],
+          "pdf_content": ["行程标题", "医院信息", "出行信息", "住宿安排", "餐饮推荐", "预估费用", "清单摘要"]
+        }
+      },
+      "frontend_pages": {
+        "ItineraryListScreen": {
+          "page_id": "M7-001",
+          "description": "行程单列表页面",
+          "key_elements": [
+            "顶部搜索栏",
+            "状态筛选Tab（全部/草稿/进行中/已完成）",
+            "行程卡片列表",
+            "新建行程按钮（FloatingActionButton）",
+            "下拉刷新"
+          ],
+          "interactions": [
+            "点击行程卡片进入详情",
+            "左滑显示操作菜单（编辑/删除/分享）",
+            "长按进入多选模式",
+            "搜索框输入关键词过滤"
+          ],
+          "data_display": {
+            "card_fields": ["title", "hospital_name", "dates", "status_tag", "trip_days"]
+          }
+        },
+        "ItineraryDetailScreen": {
+          "page_id": "M7-002",
+          "description": "行程单详情页面",
+          "key_elements": [
+            "行程状态进度条",
+            "医院信息卡片",
+            "交通方案卡片（地图预览）",
+            "住宿信息卡片",
+            "餐饮推荐列表",
+            "预估费用汇总",
+            "关联清单入口",
+            "底部操作栏（编辑/分享/导出/删除）"
+          ],
+          "interactions": [
+            "点击卡片展开详情",
+            "地图预览交通路线",
+            "点击跳转到清单页面",
+            "分享按钮生成分享链接"
+          ]
+        },
+        "ItineraryEditScreen": {
+          "page_id": "M7-003",
+          "description": "行程单编辑页面",
+          "key_elements": [
+            "标题输入框",
+            "医院选择器（可搜索）",
+            "出发地输入（带地图选点）",
+            "目的地输入（带地图选点）",
+            "日期范围选择器",
+            "预算档位选择器",
+            "交通方式选择器",
+            "住宿配置卡片",
+            "餐饮配置卡片",
+            "表单验证提示"
+          ],
+          "interactions": [
+            "医院搜索弹窗",
+            "地图选点弹窗",
+            "日期范围选择器",
+            "预算档位切换动画"
+          ]
+        },
+        "SharePreviewScreen": {
+          "page_id": "M7-004",
+          "description": "分享预览页面",
+          "key_elements": [
+            "分享链接二维码",
+            "分享验证码",
+            "有效期倒计时",
+            "复制链接按钮",
+            "分享到社交平台按钮"
+          ]
+        },
+        "ItineraryHistoryScreen": {
+          "page_id": "M7-005",
+          "description": "操作历史页面",
+          "key_elements": [
+            "时间线列表",
+            "操作类型标签",
+            "操作详情",
+            "状态变更对比"
+          ]
+        }
+      },
+      "file_structure": {
+        "backend": [
+          "backend/src/modules/itinerary/",
+          "backend/src/modules/itinerary/itinerary.schema.js",
+          "backend/src/modules/itinerary/itinerary.history.schema.js",
+          "backend/src/modules/itinerary/itinerary.controller.js",
+          "backend/src/modules/itinerary/itinerary.service.js",
+          "backend/src/modules/itinerary/itinerary.validator.js",
+          "backend/src/modules/itinerary/itinerary.routes.js",
+          "backend/src/modules/itinerary/itinerary.pdf.service.js",
+          "backend/src/modules/itinerary/itinerary.share.service.js"
+        ],
+        "frontend": [
+          "frontend/src/features/itinerary/",
+          "frontend/src/features/itinerary/components/",
+          "frontend/src/features/itinerary/components/ItineraryCard.tsx",
+          "frontend/src/features/itinerary/components/ItineraryStatusBadge.tsx",
+          "frontend/src/features/itinerary/components/TransportCard.tsx",
+          "frontend/src/features/itinerary/components/AccommodationCard.tsx",
+          "frontend/src/features/itinerary/components/DiningCard.tsx",
+          "frontend/src/features/itinerary/screens/",
+          "frontend/src/features/itinerary/screens/ItineraryListScreen.tsx",
+          "frontend/src/features/itinerary/screens/ItineraryDetailScreen.tsx",
+          "frontend/src/features/itinerary/screens/ItineraryEditScreen.tsx",
+          "frontend/src/features/itinerary/screens/SharePreviewScreen.tsx",
+          "frontend/src/features/itinerary/screens/ItineraryHistoryScreen.tsx",
+          "frontend/src/features/itinerary/store/",
+          "frontend/src/features/itinerary/store/itinerarySlice.ts",
+          "frontend/src/features/itinerary/store/itineraryThunks.ts",
+          "frontend/src/features/itinerary/types/",
+          "frontend/src/features/itinerary/types/index.ts",
+          "frontend/src/features/itinerary/api/itineraryApi.ts",
+          "frontend/src/features/itinerary/index.ts"
+        ]
+      },
+      "dependencies": {
+        "npm_packages": {
+          "backend": [
+            "pdfkit@^0.14.0",
+            "qrcode@^1.5.3",
+            "uuid@^9.0.0"
+          ],
+          "frontend": [
+            "react-native-pdf@^6.7.1",
+            "react-native-share@^9.4.1",
+            "react-native-qrcode-svg@^6.2.0"
+          ]
+        },
+        "internal_modules": ["checklist", "hospital", "notification"]
+      },
+      "tech_points": {
+        "pdf_generation": "使用pdfkit库生成PDF，支持中文显示，异步生成避免阻塞",
+        "share_code_generation": "使用uuid简化版生成6位唯一验证码，配合Redis过期管理",
+        "data_desensitization": "分享时自动脱敏敏感信息，保护用户隐私",
+        "status_state_machine": "实现状态机控制状态流转，防止非法状态变更",
+        "offline_cache": "使用Redux Persist缓存行程列表，支持离线查看"
+      },
+      "unit_test_strategy": {
+        "coverage_target": "80%",
+        "test_files": [
+          "backend/src/modules/itinerary/__tests__/itinerary.service.test.js",
+          "backend/src/modules/itinerary/__tests__/itinerary.controller.test.js",
+          "frontend/src/features/itinerary/__tests__/ItineraryListScreen.test.tsx",
+          "frontend/src/features/itinerary/__tests__/itinerarySlice.test.ts"
+        ],
+        "test_cases": [
+          "创建行程单-必填字段验证",
+          "创建行程单-日期范围校验",
+          "更新行程单-状态限制校验",
+          "状态流转-非法转换拒绝",
+          "分享生成-脱敏验证",
+          "列表查询-分页和筛选",
+          "PDF导出-内容完整性"
+        ]
+      },
+      "rollback_plan": [
+        "1. 后端回滚：执行数据库迁移移除新表或字段",
+        "2. 前端回滚：撤销Git提交恢复旧版本代码",
+        "3. 通知用户：已创建行程单不受影响",
+        "4. 数据清理：删除测试数据，保留生产数据",
+        "5. 监控观察：部署后24小时密切监控错误日志"
+      ]
+    },
+    "module8_checklist_engine": {
+      "overview": {
+        "module_name": "清单生成引擎模块",
+        "module_id": "M8",
+        "description": "根据目的地、行程天数自动生成就医准备清单，支持自定义添加、分类管理、状态跟踪，是行程规划的重要补充功能",
+        "dependencies": ["M2(基础设施)", "M7(行程单管理)"],
+        "priority": "P1",
+        "estimated_workload": 4.0
+      },
+      "data_model": {
+        "Checklist": {
+          "collection": "checklists",
+          "description": "清单主表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "checklist_id": { "type": "String", "required": true, "unique": true },
+            "user_id": { "type": "ObjectId", "required": true, "ref": "users" },
+            "itinerary_id": { "type": "ObjectId", "ref": "itineraries", "description": "关联行程单ID" },
+            "title": { "type": "String", "required": true, "default": "就医准备清单" },
+            "destination": {
+              "type": "Object",
+              "fields": {
+                "city": { "type": "String" },
+                "weather": { "type": "String", "description": "天气预报" },
+                "temperature_range": { "type": "String" }
+              },
+              "description": "目的地信息"
+            },
+            "trip_days": { "type": "Number", "required": true },
+            "progress": {
+              "type": "Object",
+              "fields": {
+                "total": { "type": "Number", "default": 0 },
+                "completed": { "type": "Number", "default": 0 },
+                "percentage": { "type": "Number", "default": 0 }
+              }
+            },
+            "is_template": { "type": "Boolean", "default": false, "description": "是否为模板" },
+            "created_at": { "type": "Date", "required": true },
+            "updated_at": { "type": "Date", "required": true }
+          }
+        },
+        "ChecklistItem": {
+          "collection": "checklist_items",
+          "description": "清单项目表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "item_id": { "type": "String", "required": true, "unique": true },
+            "checklist_id": { "type": "ObjectId", "required": true, "ref": "checklists" },
+            "category": {
+              "type": "String",
+              "required": true,
+              "enum": ["documents", "medications", "clothing", "electronics", "toiletries", "food", "money", "other"],
+              "description": "分类：证件/药品/衣物/电子设备/洗漱用品/食品/金钱/其他"
+            },
+            "name": { "type": "String", "required": true },
+            "quantity": { "type": "Number", "default": 1, "description": "数量" },
+            "unit": { "type": "String", "default": "个", "description": "单位" },
+            "is_completed": { "type": "Boolean", "default": false },
+            "is_essential": { "type": "Boolean", "default": true, "description": "是否必带" },
+            "is_custom": { "type": "Boolean", "default": false, "description": "是否自定义添加" },
+            "notes": { "type": "String", "max": 200 },
+            "sort_order": { "type": "Number", "default": 0 },
+            "completed_at": { "type": "Date" },
+            "created_at": { "type": "Date", "default": "Date.now" },
+            "updated_at": { "type": "Date", "default": "Date.now" }
+          },
+          "indexes": [
+            { "fields": { "checklist_id": 1, "category": 1, "sort_order": 1 } },
+            { "fields": { "checklist_id": 1, "is_completed": 1 } }
+          ]
+        },
+        "ChecklistTemplate": {
+          "collection": "checklist_templates",
+          "description": "清单模板表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "template_id": { "type": "String", "required": true, "unique": true },
+            "name": { "type": "String", "required": true },
+            "description": { "type": "String" },
+            "items": {
+              "type": "Array",
+              "items": {
+                "type": "Object",
+                "fields": {
+                  "category": "String",
+                  "name": "String",
+                  "quantity": "Number",
+                  "unit": "String",
+                  "is_essential": "Boolean",
+                  "notes": "String",
+                  "conditions": { "type": "Array", "description": "适用条件" }
+                }
+              }
+            },
+            "is_active": { "type": "Boolean", "default": true },
+            "version": { "type": "Number", "default": 1 },
+            "created_at": { "type": "Date" },
+            "updated_at": { "type": "Date" }
+          }
+        }
+      },
+      "api_routes": {
+        "base_path": "/api/v1/checklists",
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/",
+            "description": "获取用户所有清单列表",
+            "query_params": ["page", "limit", "itinerary_id"],
+            "auth": true,
+            "response": { "list": "Array", "total": "Number" }
+          },
+          {
+            "method": "GET",
+            "path": "/:checklistId",
+            "description": "获取清单详情（含所有项目）",
+            "auth": true,
+            "response": { "checklist": "Object", "items": "Array" }
+          },
+          {
+            "method": "POST",
+            "path": "/generate",
+            "description": "根据行程自动生成清单",
+            "body": ["itinerary_id", "trip_days", "destination"],
+            "auth": true,
+            "response": { "checklist": "Object", "generated_items": "Number" }
+          },
+          {
+            "method": "POST",
+            "path": "/:checklistId/items",
+            "description": "添加清单项目",
+            "body": ["name", "category", "quantity", "notes"],
+            "auth": true,
+            "response": "ChecklistItem对象"
+          },
+          {
+            "method": "PUT",
+            "path": "/:checklistId/items/:itemId",
+            "description": "更新清单项目",
+            "body": ["name", "quantity", "notes", "sort_order"],
+            "auth": true,
+            "response": "ChecklistItem对象"
+          },
+          {
+            "method": "PATCH",
+            "path": "/:checklistId/items/:itemId/toggle",
+            "description": "切换项目完成状态",
+            "auth": true,
+            "response": { "item": "Object", "progress": "Object" }
+          },
+          {
+            "method": "PATCH",
+            "path": "/:checklistId/items/batch-toggle",
+            "description": "批量切换项目状态",
+            "body": ["item_ids", "is_completed"],
+            "auth": true,
+            "response": { "updated": "Number", "progress": "Object" }
+          },
+          {
+            "method": "DELETE",
+            "path": "/:checklistId/items/:itemId",
+            "description": "删除清单项目",
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "DELETE",
+            "path": "/:checklistId",
+            "description": "删除整份清单",
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "GET",
+            "path": "/:checklistId/progress",
+            "description": "获取完成进度",
+            "auth": true,
+            "response": { "total": "Number", "completed": "Number", "percentage": "Number" }
+          }
+        ]
+      },
+      "business_logic": {
+        "generate_checklist": {
+          "flow": [
+            "1. 接收行程信息和目的地信息",
+            "2. 根据行程天数计算各类物品建议数量",
+            "3. 根据目的地天气添加相应物品",
+            "4. 从模板库加载基础必带清单",
+            "5. 智能添加就医相关物品（病历、医保卡等）",
+            "6. 按分类整理并创建清单记录",
+            "7. 返回生成的清单和项目列表"
+          ],
+          "generation_rules": {
+            "documents": ["身份证", "医保卡", "病历本", "检查报告", "银行卡"],
+            "medications": ["日常用药", "急救药品", "体温计", "口罩"],
+            "clothing": ["根据天数计算", "根据天气添加"],
+            "toiletries": ["牙刷", "牙膏", "毛巾", "洗发水", "剃须刀"],
+            "electronics": ["手机", "充电器", "充电宝"],
+            "food": ["零食", "饮用水"],
+            "money": ["现金", "备用金"]
+          },
+          "quantity_calculation": {
+            "underwear": "行程天数 + 1",
+            "socks": "行程天数 + 1",
+            "medication": "行程天数 + 1",
+            "mask": "行程天数 * 2"
+          }
+        },
+        "toggle_item_status": {
+          "flow": [
+            "1. 验证项目和清单归属",
+            "2. 切换is_completed状态",
+            "3. 设置completed_at时间戳",
+            "4. 重新计算清单完成进度",
+            "5. 如果完成率达到100%，触发庆祝动画"
+          ]
+        },
+        "sync_to_local": {
+          "flow": [
+            "1. 从服务器拉取最新清单数据",
+            "2. 存储到AsyncStorage",
+            "3. 标记最后同步时间",
+            "4. 支持离线标记完成状态",
+            "5. 联网后自动同步离线操作"
+          ],
+          "conflict_resolution": {
+            "server_wins": "最后修改时间较新的为准",
+            "merge": "完成状态取并集"
+          }
+        }
+      },
+      "frontend_pages": {
+        "ChecklistScreen": {
+          "page_id": "M8-001",
+          "description": "清单主页面",
+          "key_elements": [
+            "顶部进度条（圆形进度）",
+            "分类Tab栏",
+            "分类项目列表",
+            "添加自定义项目按钮",
+            "同步状态指示器",
+            "导出按钮"
+          ],
+          "interactions": [
+            "点击复选框切换完成状态",
+            "长按项目显示操作菜单（编辑/删除）",
+            "点击分类Tab筛选",
+            "下拉刷新同步数据",
+            "浮动添加按钮展开输入框"
+          ]
+        },
+        "AddItemScreen": {
+          "page_id": "M8-002",
+          "description": "添加自定义项目页面",
+          "key_elements": [
+            "项目名称输入",
+            "分类选择器",
+            "数量选择器",
+            "备注输入框",
+            "必带开关",
+            "保存按钮"
+          ]
+        },
+        "ChecklistProgressScreen": {
+          "page_id": "M8-003",
+          "description": "完成进度页面",
+          "key_elements": [
+            "大字体进度百分比",
+            "已完成/总数统计",
+            "分类完成度卡片",
+            "历史完成记录",
+            "分享进度按钮"
+          ]
+        }
+      },
+      "file_structure": {
+        "backend": [
+          "backend/src/modules/checklist/",
+          "backend/src/modules/checklist/checklist.schema.js",
+          "backend/src/modules/checklist/checklist.item.schema.js",
+          "backend/src/modules/checklist/checklist.template.schema.js",
+          "backend/src/modules/checklist/checklist.controller.js",
+          "backend/src/modules/checklist/checklist.service.js",
+          "backend/src/modules/checklist/checklist.generator.service.js",
+          "backend/src/modules/checklist/checklist.validator.js",
+          "backend/src/modules/checklist/checklist.routes.js"
+        ],
+        "frontend": [
+          "frontend/src/features/checklist/",
+          "frontend/src/features/checklist/components/",
+          "frontend/src/features/checklist/components/ChecklistItem.tsx",
+          "frontend/src/features/checklist/components/ChecklistProgress.tsx",
+          "frontend/src/features/checklist/components/CategoryTab.tsx",
+          "frontend/src/features/checklist/components/AddItemModal.tsx",
+          "frontend/src/features/checklist/screens/",
+          "frontend/src/features/checklist/screens/ChecklistScreen.tsx",
+          "frontend/src/features/checklist/screens/AddItemScreen.tsx",
+          "frontend/src/features/checklist/screens/ProgressScreen.tsx",
+          "frontend/src/features/checklist/store/",
+          "frontend/src/features/checklist/store/checklistSlice.ts",
+          "frontend/src/features/checklist/types/",
+          "frontend/src/features/checklist/types/index.ts",
+          "frontend/src/features/checklist/api/checklistApi.ts"
+        ]
+      },
+      "dependencies": {
+        "npm_packages": {
+          "backend": [],
+          "frontend": [
+            "@react-native-async-storage/async-storage@^1.21.0"
+          ]
+        },
+        "internal_modules": ["itinerary"]
+      },
+      "tech_points": {
+        "offline_storage": "使用AsyncStorage存储清单数据，支持离线使用",
+        "smart_generation": "根据目的地天气智能调整衣物建议数量",
+        "category_management": "按8大分类组织项目，支持分类统计",
+        "progress_tracking": "实时计算完成进度，支持进度分享",
+        "batch_operations": "支持批量操作，提高用户效率"
+      },
+      "unit_test_strategy": {
+        "coverage_target": "80%",
+        "test_files": [
+          "backend/src/modules/checklist/__tests__/checklist.generator.test.js",
+          "backend/src/modules/checklist/__tests__/checklist.service.test.js",
+          "frontend/src/features/checklist/__tests__/ChecklistScreen.test.tsx",
+          "frontend/src/features/checklist/__tests__/checklistSlice.test.ts"
+        ],
+        "test_cases": [
+          "清单生成-项目完整性验证",
+          "清单生成-数量计算规则",
+          "状态切换-进度更新",
+          "批量操作-状态一致性",
+          "离线存储-数据持久化",
+          "分类统计-准确性验证"
+        ]
+      },
+      "rollback_plan": [
+        "1. 后端回滚：移除清单相关表和API",
+        "2. 前端回滚：移除清单功能入口和页面",
+        "3. 数据处理：保留清单数据作为历史记录",
+        "4. 功能兼容：行程单仍可正常查看（清单入口隐藏）"
+      ]
+    },
+    "module9_user_center": {
+      "overview": {
+        "module_name": "用户中心模块",
+        "module_id": "M9",
+        "description": "提供用户个人中心功能，包含个人信息管理、历史记录查询、收藏管理、系统设置等，是用户管理和数据维护的核心模块",
+        "dependencies": ["M1(用户认证)"],
+        "priority": "P2",
+        "estimated_workload": 3.0
+      },
+      "data_model": {
+        "User": {
+          "collection": "users",
+          "description": "用户信息表（已在M1定义，此处扩展）",
+          "additional_fields": {
+            "profile": {
+              "type": "Object",
+              "fields": {
+                "real_name": { "type": "String", "max": 50 },
+                "gender": { "type": "String", "enum": ["male", "female", "other"] },
+                "birth_date": { "type": "Date" },
+                "emergency_contact": {
+                  "type": "Object",
+                  "fields": {
+                    "name": "String",
+                    "phone": "String",
+                    "relationship": "String"
+                  }
+                }
+              }
+            },
+            "preferences": {
+              "type": "Object",
+              "fields": {
+                "default_budget_level": { "type": "String", "enum": ["low", "mid", "high"], "default": "mid" },
+                "default_transport": { "type": "String", "enum": ["driving", "transit", "taxi"], "default": "transit" },
+                "notification_settings": {
+                  "type": "Object",
+                  "fields": {
+                    "trip_reminder": { "type": "Boolean", "default": true },
+                    "weather_alert": { "type": "Boolean", "default": true },
+                    "marketing": { "type": "Boolean", "default": false }
+                  }
+                },
+                "privacy_settings": {
+                  "type": "Object",
+                  "fields": {
+                    "show_history": { "type": "Boolean", "default": true },
+                    "allow_share": { "type": "Boolean", "default": true }
+                  }
+                }
+              }
+            },
+            "stats": {
+              "type": "Object",
+              "fields": {
+                "total_itineraries": { "type": "Number", "default": 0 },
+                "total_hospitals_viewed": { "type": "Number", "default": 0 },
+                "member_since": { "type": "Date" },
+                "last_active_at": { "type": "Date" }
+              }
+            }
+          }
+        },
+        "UserFavorite": {
+          "collection": "user_favorites",
+          "description": "用户收藏表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "user_id": { "type": "ObjectId", "required": true, "ref": "users" },
+            "favorite_type": {
+              "type": "String",
+              "required": true,
+              "enum": ["hospital", "accommodation", "restaurant", "itinerary"]
+            },
+            "target_id": { "type": "String", "required": true },
+            "target_info": { "type": "Object", "description": "冗余存储目标信息" },
+            "notes": { "type": "String", "max": 200 },
+            "tags": { "type": "Array", "items": "String" },
+            "created_at": { "type": "Date", "default": "Date.now" }
+          },
+          "indexes": [
+            { "fields": { "user_id": 1, "favorite_type": 1 } },
+            { "fields": { "user_id": 1, "created_at": -1 } }
+          ]
+        },
+        "UserHistory": {
+          "collection": "user_histories",
+          "description": "用户操作历史表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "user_id": { "type": "ObjectId", "required": true, "ref": "users" },
+            "history_type": {
+              "type": "String",
+              "required": true,
+              "enum": ["symptom_analysis", "hospital_view", "itinerary_view", "itinerary_create", "search"]
+            },
+            "target_id": { "type": "String" },
+            "target_info": { "type": "Object" },
+            "search_query": { "type": "String" },
+            "metadata": { "type": "Object" },
+            "created_at": { "type": "Date", "default": "Date.now" }
+          },
+          "indexes": [
+            { "fields": { "user_id": 1, "history_type": 1, "created_at": -1 } },
+            { "fields": { "created_at": 1 }, "expireAfterSeconds": 7776000 }
+          ]
+        },
+        "UserSetting": {
+          "collection": "user_settings",
+          "description": "用户设置表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "user_id": { "type": "ObjectId", "required": true, "unique": true },
+            "language": { "type": "String", "default": "zh-CN" },
+            "theme": { "type": "String", "enum": ["light", "dark", "system"], "default": "system" },
+            "notifications": {
+              "type": "Object",
+              "fields": {
+                "in_app": { "type": "Boolean", "default": true },
+                "push": { "type": "Boolean", "default": true },
+                "sms": { "type": "Boolean", "default": true },
+                "reminder_advance_hours": { "type": "Number", "default": 24 }
+              }
+            },
+            "privacy": {
+              "type": "Object",
+              "fields": {
+                "data_collection": { "type": "Boolean", "default": true },
+                "personalized_recommendations": { "type": "Boolean", "default": true }
+              }
+            },
+            "updated_at": { "type": "Date", "default": "Date.now" }
+          }
+        }
+      },
+      "api_routes": {
+        "base_path": "/api/v1/users",
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/profile",
+            "description": "获取用户个人信息",
+            "auth": true,
+            "response": "User对象（不含敏感信息）"
+          },
+          {
+            "method": "PUT",
+            "path": "/profile",
+            "description": "更新用户个人信息",
+            "body": ["nickname", "avatar", "profile"],
+            "auth": true,
+            "response": "更新后的User对象"
+          },
+          {
+            "method": "POST",
+            "path": "/avatar/upload",
+            "description": "上传用户头像",
+            "multipart": true,
+            "auth": true,
+            "response": { "avatar_url": "String" }
+          },
+          {
+            "method": "PUT",
+            "path": "/preferences",
+            "description": "更新用户偏好设置",
+            "body": ["default_budget_level", "default_transport", "notification_settings"],
+            "auth": true,
+            "response": "更新后的preferences"
+          },
+          {
+            "method": "GET",
+            "path": "/favorites",
+            "description": "获取收藏列表",
+            "query_params": ["type", "page", "limit"],
+            "auth": true,
+            "response": { "list": "Array", "total": "Number" }
+          },
+          {
+            "method": "POST",
+            "path": "/favorites",
+            "description": "添加收藏",
+            "body": ["favorite_type", "target_id", "target_info", "tags"],
+            "auth": true,
+            "response": "UserFavorite对象"
+          },
+          {
+            "method": "DELETE",
+            "path": "/favorites/:favoriteId",
+            "description": "取消收藏",
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "PUT",
+            "path": "/favorites/:favoriteId",
+            "description": "更新收藏备注",
+            "body": ["notes", "tags"],
+            "auth": true,
+            "response": "UserFavorite对象"
+          },
+          {
+            "method": "GET",
+            "path": "/history",
+            "description": "获取操作历史",
+            "query_params": ["type", "page", "limit", "start_date", "end_date"],
+            "auth": true,
+            "response": { "list": "Array", "total": "Number" }
+          },
+          {
+            "method": "DELETE",
+            "path": "/history",
+            "description": "清空历史记录",
+            "body": ["history_type"],
+            "auth": true,
+            "response": { "deleted": "Number" }
+          },
+          {
+            "method": "GET",
+            "path": "/settings",
+            "description": "获取用户设置",
+            "auth": true,
+            "response": "UserSetting对象"
+          },
+          {
+            "method": "PUT",
+            "path": "/settings",
+            "description": "更新用户设置",
+            "body": ["language", "theme", "notifications", "privacy"],
+            "auth": true,
+            "response": "更新后的UserSetting对象"
+          },
+          {
+            "method": "GET",
+            "path": "/stats",
+            "description": "获取用户统计数据",
+            "auth": true,
+            "response": { "total_itineraries": "Number", "total_favorites": "Number", "member_days": "Number" }
+          }
+        ]
+      },
+      "business_logic": {
+        "update_profile": {
+          "flow": [
+            "1. 验证用户登录状态",
+            "2. 校验更新字段",
+            "3. 头像上传到七牛云并获取URL",
+            "4. 更新用户文档",
+            "5. 记录修改历史"
+          ],
+          "field_restrictions": {
+            "phone": "不可修改，需通过短信验证",
+            "password": "通过独立接口修改",
+            "created_at": "系统生成，不可修改"
+          }
+        },
+        "manage_favorites": {
+          "flow": [
+            "1. 检查是否已收藏",
+            "2. 如果已收藏，返回提示",
+            "3. 如果未收藏，创建收藏记录",
+            "4. 更新用户收藏统计"
+          ],
+          "deduplication": "同一目标同一类型只允许收藏一次"
+        },
+        "record_history": {
+          "flow": [
+            "1. 确定历史类型",
+            "2. 提取关键信息",
+            "3. 存储历史记录",
+            "4. 定期清理30天前的历史"
+          ],
+          "types": {
+            "symptom_analysis": "记录分析ID和结果",
+            "hospital_view": "记录医院ID",
+            "itinerary_view": "记录行程ID",
+            "itinerary_create": "记录行程ID",
+            "search": "记录搜索关键词"
+          }
+        },
+        "clear_history": {
+          "flow": [
+            "1. 根据类型筛选",
+            "2. 执行删除操作",
+            "3. 返回删除数量"
+          ],
+          "permissions": "只能删除自己的历史记录"
+        }
+      },
+      "frontend_pages": {
+        "ProfileScreen": {
+          "page_id": "M9-001",
+          "description": "个人中心页面",
+          "key_elements": [
+            "用户头像（可点击上传）",
+            "用户昵称",
+            "用户ID",
+            "会员等级",
+            "统计卡片（行程数/收藏数）",
+            "功能列表入口"
+          ],
+          "interactions": [
+            "点击头像上传",
+            "点击昵称编辑",
+            "点击统计查看详情"
+          ]
+        },
+        "EditProfileScreen": {
+          "page_id": "M9-002",
+          "description": "编辑个人信息页面",
+          "key_elements": [
+            "头像编辑区",
+            "昵称输入框",
+            "真实姓名输入框",
+            "性别选择器",
+            "出生日期选择器",
+            "紧急联系人",
+            "保存按钮"
+          ]
+        },
+        "FavoritesScreen": {
+          "page_id": "M9-003",
+          "description": "收藏管理页面",
+          "key_elements": [
+            "分类Tab（医院/住宿/餐饮/行程）",
+            "收藏卡片列表",
+            "搜索框",
+            "编辑/取消收藏按钮",
+            "添加备注入口"
+          ],
+          "interactions": [
+            "点击卡片跳转详情",
+            "左滑取消收藏",
+            "点击添加备注"
+          ]
+        },
+        "HistoryScreen": {
+          "page_id": "M9-004",
+          "description": "历史记录页面",
+          "key_elements": [
+            "分类Tab（全部/症状分析/医院浏览/行程/搜索）",
+            "时间线列表",
+            "搜索关键词标签",
+            "清除历史按钮",
+            "下拉刷新"
+          ],
+          "interactions": [
+            "点击记录跳转对应页面",
+            "搜索记录可快速搜索",
+            "长按删除单条记录"
+          ]
+        },
+        "SettingsScreen": {
+          "page_id": "M9-005",
+          "description": "设置页面",
+          "key_elements": [
+            "消息通知设置",
+            "隐私设置",
+            "偏好设置",
+            "语言选择",
+            "主题选择",
+            "关于我们",
+            "退出登录",
+            "清除缓存"
+          ],
+          "interactions": [
+            "开关切换即时生效",
+            "点击进入子设置页面"
+          ]
+        }
+      },
+      "file_structure": {
+        "backend": [
+          "backend/src/modules/user/",
+          "backend/src/modules/user/user.schema.js",
+          "backend/src/modules/user/user.favorite.schema.js",
+          "backend/src/modules/user/user.history.schema.js",
+          "backend/src/modules/user/user.setting.schema.js",
+          "backend/src/modules/user/user.controller.js",
+          "backend/src/modules/user/user.service.js",
+          "backend/src/modules/user/user.validator.js",
+          "backend/src/modules/user/user.routes.js"
+        ],
+        "frontend": [
+          "frontend/src/features/user/",
+          "frontend/src/features/user/components/",
+          "frontend/src/features/user/components/Avatar.tsx",
+          "frontend/src/features/user/components/StatCard.tsx",
+          "frontend/src/features/user/components/FavoriteCard.tsx",
+          "frontend/src/features/user/screens/",
+          "frontend/src/features/user/screens/ProfileScreen.tsx",
+          "frontend/src/features/user/screens/EditProfileScreen.tsx",
+          "frontend/src/features/user/screens/FavoritesScreen.tsx",
+          "frontend/src/features/user/screens/HistoryScreen.tsx",
+          "frontend/src/features/user/screens/SettingsScreen.tsx",
+          "frontend/src/features/user/store/",
+          "frontend/src/features/user/store/userSlice.ts",
+          "frontend/src/features/user/store/favoritesSlice.ts",
+          "frontend/src/features/user/types/",
+          "frontend/src/features/user/types/index.ts",
+          "frontend/src/features/user/api/userApi.ts"
+        ]
+      },
+      "dependencies": {
+        "npm_packages": {
+          "backend": [],
+          "frontend": [
+            "react-native-image-picker@^7.1.0"
+          ]
+        },
+        "internal_modules": ["auth", "hospital", "itinerary"]
+      },
+      "tech_points": {
+        "avatar_upload": "集成react-native-image-picker，支持拍照和相册选择",
+        "history_cleanup": "MongoDB TTL索引自动清理30天前的历史记录",
+        "favorites_dedup": "数据库层面保证同一目标不重复收藏",
+        "settings_persistence": "用户设置存储到数据库和本地双备份",
+        "stats_realtime": "用户统计实时计算，支持快速查询"
+      },
+      "unit_test_strategy": {
+        "coverage_target": "80%",
+        "test_files": [
+          "backend/src/modules/user/__tests__/user.service.test.js",
+          "backend/src/modules/user/__tests__/user.controller.test.js",
+          "frontend/src/features/user/__tests__/ProfileScreen.test.tsx",
+          "frontend/src/features/user/__tests__/userSlice.test.ts"
+        ],
+        "test_cases": [
+          "个人信息更新-字段验证",
+          "头像上传-格式校验",
+          "收藏添加-重复检测",
+          "收藏取消-存在性验证",
+          "历史记录-分页查询",
+          "设置更新-类型校验"
+        ]
+      },
+      "rollback_plan": [
+        "1. 后端回滚：保留用户基础表，移除扩展字段",
+        "2. 前端回滚：移除个人中心功能入口",
+        "3. 数据处理：收藏历史数据保留但不可见",
+        "4. 用户通知：引导用户重新设置偏好"
+      ]
+    },
+    "module10_notification": {
+      "overview": {
+        "module_name": "消息通知模块",
+        "module_id": "M10",
+        "description": "实现短信验证码发送、行程提醒通知、系统消息推送等功能，是用户触达和业务提醒的重要通道",
+        "dependencies": ["M1(用户认证)", "M2(基础设施)", "M7(行程单管理)"],
+        "priority": "P2",
+        "estimated_workload": 3.5
+      },
+      "data_model": {
+        "Notification": {
+          "collection": "notifications",
+          "description": "消息通知表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "notification_id": { "type": "String", "required": true, "unique": true },
+            "user_id": { "type": "ObjectId", "required": true, "ref": "users" },
+            "notification_type": {
+              "type": "String",
+              "required": true,
+              "enum": ["sms_verification", "trip_reminder", "appointment_reminder", "system_message", "marketing"]
+            },
+            "title": { "type": "String", "required": true },
+            "content": { "type": "String", "required": true },
+            "channel": {
+              "type": "String",
+              "required": true,
+              "enum": ["in_app", "sms", "push"]
+            },
+            "status": {
+              "type": "String",
+              "enum": ["pending", "sent", "delivered", "read", "failed"],
+              "default": "pending"
+            },
+            "metadata": {
+              "type": "Object",
+              "description": "扩展信息，如行程ID、验证码等"
+            },
+            "scheduled_at": { "type": "Date", "description": "计划发送时间" },
+            "sent_at": { "type": "Date" },
+            "read_at": { "type": "Date" },
+            "created_at": { "type": "Date", "default": "Date.now" }
+          },
+          "indexes": [
+            { "fields": { "user_id": 1, "created_at": -1 } },
+            { "fields": { "user_id": 1, "status": 1 } },
+            { "fields": { "scheduled_at": 1 }, "sparse": true },
+            { "fields": { "status": 1, "scheduled_at": 1 } }
+          ]
+        },
+        "SmsVerification": {
+          "collection": "sms_verifications",
+          "description": "短信验证码表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "phone": { "type": "String", "required": true },
+            "code": { "type": "String", "required": true },
+            "purpose": {
+              "type": "String",
+              "required": true,
+              "enum": ["register", "login", "password_reset", "bind_phone"]
+            },
+            "status": { "type": "String", "enum": ["pending", "verified", "expired", "failed"], "default": "pending" },
+            "ip_address": { "type": "String" },
+            "device_info": { "type": "String" },
+            "verified_at": { "type": "Date" },
+            "expired_at": { "type": "Date", "required": true },
+            "created_at": { "type": "Date", "default": "Date.now" }
+          },
+          "indexes": [
+            { "fields": { "phone": 1, "purpose": 1 } },
+            { "fields": { "expired_at": 1 }, "expireAfterSeconds": 0 }
+          ]
+        },
+        "PushToken": {
+          "collection": "push_tokens",
+          "description": "推送Token表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "user_id": { "type": "ObjectId", "required": true },
+            "token": { "type": "String", "required": true },
+            "platform": { "type": "String", "enum": ["ios", "android"] },
+            "app_version": { "type": "String" },
+            "is_active": { "type": "Boolean", "default": true },
+            "last_active_at": { "type": "Date", "default": "Date.now" },
+            "created_at": { "type": "Date", "default": "Date.now" }
+          },
+          "indexes": [
+            { "fields": { "user_id": 1 } },
+            { "fields": { "token": 1 }, "unique": true }
+          ]
+        },
+        "NotificationTemplate": {
+          "collection": "notification_templates",
+          "description": "通知模板表",
+          "fields": {
+            "_id": { "type": "ObjectId", "required": true },
+            "template_id": { "type": "String", "required": true },
+            "type": { "type": "String", "required": true },
+            "channel": { "type": "String", "required": true },
+            "title_template": { "type": "String" },
+            "content_template": { "type": "String", "required": true },
+            "variables": { "type": "Array" },
+            "is_active": { "type": "Boolean", "default": true },
+            "created_at": { "type": "Date" },
+            "updated_at": { "type": "Date" }
+          }
+        }
+      },
+      "api_routes": {
+        "base_path": "/api/v1/notifications",
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/",
+            "description": "获取消息列表",
+            "query_params": ["type", "status", "page", "limit", "start_date", "end_date"],
+            "auth": true,
+            "response": { "list": "Array", "total": "Number", "unread_count": "Number" }
+          },
+          {
+            "method": "GET",
+            "path": "/:notificationId",
+            "description": "获取消息详情",
+            "auth": true,
+            "response": "Notification对象"
+          },
+          {
+            "method": "PATCH",
+            "path": "/:notificationId/read",
+            "description": "标记消息已读",
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "PATCH",
+            "path": "/read-all",
+            "description": "标记所有消息已读",
+            "auth": true,
+            "response": { "updated": "Number" }
+          },
+          {
+            "method": "DELETE",
+            "path": "/:notificationId",
+            "description": "删除消息",
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "POST",
+            "path": "/sms/send-verification",
+            "description": "发送短信验证码",
+            "body": ["phone", "purpose"],
+            "auth": false,
+            "response": { "message_id": "String", "expire_minutes": "Number" }
+          },
+          {
+            "method": "POST",
+            "path": "/sms/verify",
+            "description": "验证短信验证码",
+            "body": ["phone", "code", "purpose"],
+            "auth": false,
+            "response": { "verified": "Boolean" }
+          },
+          {
+            "method": "POST",
+            "path": "/push/register-token",
+            "description": "注册推送Token",
+            "body": ["token", "platform"],
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "DELETE",
+            "path": "/push/unregister-token",
+            "description": "注销推送Token",
+            "body": ["token"],
+            "auth": true,
+            "response": { "success": "Boolean" }
+          },
+          {
+            "method": "GET",
+            "path": "/settings",
+            "description": "获取通知设置",
+            "auth": true,
+            "response": { "in_app": "Boolean", "sms": "Boolean", "push": "Boolean" }
+          },
+          {
+            "method": "PUT",
+            "path": "/settings",
+            "description": "更新通知设置",
+            "body": ["in_app", "sms", "push"],
+            "auth": true,
+            "response": "更新后的设置"
+          }
+        ]
+      },
+      "business_logic": {
+        "send_sms_verification": {
+          "flow": [
+            "1. 验证手机号格式",
+            "2. 检查发送频率（同一手机号同一目的60秒内限制）",
+            "3. 生成6位数字验证码",
+            "4. 存储验证码记录（5分钟有效期）",
+            "5. 调用阿里云短信API发送",
+            "6. 更新发送状态"
+          ],
+          "rate_limits": {
+            "per_phone_per_purpose": "60秒",
+            "per_phone_per_day": "10条",
+            "per_ip_per_day": "50条"
+          },
+          "code_generation": "随机6位数字，区分大小写不敏感"
+        },
+        "send_trip_reminder": {
+          "flow": [
+            "1. 行程开始前24小时触发",
+            "2. 获取用户通知偏好设置",
+            "3. 根据偏好选择发送渠道（APP推送/短信）",
+            "4. 渲染通知模板（行程信息、目的地天气）",
+            "5. 发送通知",
+            "6. 记录通知日志"
+          ],
+          "reminder_schedule": {
+            "24_hours_before": "出行提醒",
+            "2_hours_before": "出发提醒",
+            "on_arrival": "到达提醒",
+            "appointment_day": "就医提醒"
+          }
+        },
+        "send_in_app_notification": {
+          "flow": [
+            "1. 创建通知记录",
+            "2. 调用极光/个推API推送",
+            "3. 更新推送状态",
+            "4. 如果用户在线，WebSocket实时推送"
+          ]
+        },
+        "process_scheduled_notifications": {
+          "flow": [
+            "1. 每分钟查询待发送的定时通知",
+            "2. 按优先级排序",
+            "3. 批量发送",
+            "4. 更新发送状态和发送时间"
+          ],
+          "error_handling": {
+            "retry": "失败的通知自动重试3次",
+            "dead_letter": "3次失败后进入死信队列，人工处理"
+          }
+        }
+      },
+      "frontend_pages": {
+        "NotificationListScreen": {
+          "page_id": "M10-001",
+          "description": "消息列表页面",
+          "key_elements": [
+            "消息分类Tab（全部/系统/行程/互动）",
+            "未读红点提示",
+            "消息卡片列表",
+            "全标已读按钮",
+            "清空消息按钮"
+          ],
+          "interactions": [
+            "点击消息进入详情",
+            "左滑标记已读",
+            "长按删除消息",
+            "下拉刷新"
+          ]
+        },
+        "NotificationDetailScreen": {
+          "page_id": "M10-002",
+          "description": "消息详情页面",
+          "key_elements": [
+            "消息标题",
+            "发送时间",
+            "消息内容（支持富文本）",
+            "相关操作按钮（如查看行程）",
+            "删除按钮"
+          ]
+        },
+        "NotificationSettingsScreen": {
+          "page_id": "M10-003",
+          "description": "通知设置页面",
+          "key_elements": [
+            "APP内通知开关",
+            "推送通知开关",
+            "短信通知开关",
+            "行程提醒提前时间设置",
+            "免打扰时段设置"
+          ],
+          "interactions": [
+            "开关切换即时生效",
+            "时间选择器弹窗"
+          ]
+        },
+        "VerificationCodeScreen": {
+          "page_id": "M10-004",
+          "description": "验证码输入页面",
+          "key_elements": [
+            "倒计时显示",
+            "6位验证码输入框",
+            "重新发送按钮",
+            "确认按钮"
+          ],
+          "interactions": [
+            "自动跳转到下一格",
+            "粘贴验证码自动填充",
+            "倒计时结束后可重发"
+          ]
+        }
+      },
+      "file_structure": {
+        "backend": [
+          "backend/src/modules/notification/",
+          "backend/src/modules/notification/notification.schema.js",
+          "backend/src/modules/notification/sms.verification.schema.js",
+          "backend/src/modules/notification/push.token.schema.js",
+          "backend/src/modules/notification/notification.template.schema.js",
+          "backend/src/modules/notification/notification.controller.js",
+          "backend/src/modules/notification/notification.service.js",
+          "backend/src/modules/notification/sms.service.js",
+          "backend/src/modules/notification/push.service.js",
+          "backend/src/modules/notification/notification.validator.js",
+          "backend/src/modules/notification/notification.routes.js"
+        ],
+        "frontend": [
+          "frontend/src/features/notification/",
+          "frontend/src/features/notification/components/",
+          "frontend/src/features/notification/components/NotificationItem.tsx",
+          "frontend/src/features/notification/components/NotificationBadge.tsx",
+          "frontend/src/features/notification/components/VerificationInput.tsx",
+          "frontend/src/features/notification/screens/",
+          "frontend/src/features/notification/screens/NotificationListScreen.tsx",
+          "frontend/src/features/notification/screens/NotificationDetailScreen.tsx",
+          "frontend/src/features/notification/screens/NotificationSettingsScreen.tsx",
+          "frontend/src/features/notification/screens/VerificationCodeScreen.tsx",
+          "frontend/src/features/notification/store/",
+          "frontend/src/features/notification/store/notificationSlice.ts",
+          "frontend/src/features/notification/types/",
+          "frontend/src/features/notification/types/index.ts",
+          "frontend/src/features/notification/api/notificationApi.ts"
+        ]
+      },
+      "dependencies": {
+        "npm_packages": {
+          "backend": [
+            "aliyun-sdk@^1.6.0",
+            "jpush-sdk@^5.1.0"
+          ],
+          "frontend": [
+            "@react-native-push-notification/push-notification@^8.1.1",
+            "@react-native-community/push-notification-ios@^1.11.0"
+          ]
+        },
+        "internal_modules": ["user", "itinerary"]
+      },
+      "tech_points": {
+        "sms_rate_limiting": "Redis实现短信发送频率限制，防止恶意刷短信",
+        "notification_scheduler": "定时任务每小时扫描待发送通知，支持精确到分钟",
+        "multi_channel_push": "支持APP推送、短信、站内信多渠道触达",
+        "offline_message": "离线消息存储，登录后自动同步",
+        "template_engine": "使用变量模板渲染通知内容，支持多语言"
+      },
+      "unit_test_strategy": {
+        "coverage_target": "80%",
+        "test_files": [
+          "backend/src/modules/notification/__tests__/sms.service.test.js",
+          "backend/src/modules/notification/__tests__/push.service.test.js",
+          "backend/src/modules/notification/__tests__/notification.service.test.js",
+          "frontend/src/features/notification/__tests__/NotificationListScreen.test.tsx",
+          "frontend/src/features/notification/__tests__/notificationSlice.test.ts"
+        ],
+        "test_cases": [
+          "短信发送-频率限制",
+          "短信验证-验证码校验",
+          "验证码过期-时间验证",
+          "通知发送-状态更新",
+          "通知已读-批量操作",
+          "推送注册-Token管理",
+          "模板渲染-变量替换"
+        ]
+      },
+      "rollback_plan": [
+        "1. 后端回滚：保留短信验证码功能，移除推送相关",
+        "2. 前端回滚：隐藏通知入口，保留验证码页面",
+        "3. 阿里云配置：保留短信API配置，禁用推送",
+        "4. 数据处理：通知记录保留但不展示",
+        "5. 用户通知：引导重新开启通知权限"
+      ]
+    }
+  },
+  "errors": []
+}
