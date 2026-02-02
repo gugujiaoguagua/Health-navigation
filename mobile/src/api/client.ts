@@ -12,8 +12,18 @@ export function getApiBaseUrl() {
   if (explicit && explicit.trim()) return explicit.trim()
 
   const port = Number(process.env.EXPO_PUBLIC_API_PORT ?? 3000)
+
+  // Web: default to same-origin in production (Cloudflare Pages / HTTPS), to avoid CORS & mixed-content.
+  // Local web dev (localhost) keeps the old behavior unless you override with EXPO_PUBLIC_API_BASE_URL.
   if (Platform.OS === 'web') {
-    const host = globalThis.location?.hostname ?? 'localhost'
+    const hostname = globalThis.location?.hostname
+    const origin = globalThis.location?.origin
+
+    if (origin && hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return origin
+    }
+
+    const host = hostname ?? 'localhost'
     return `http://${host}:${port}`
   }
 
@@ -58,8 +68,9 @@ export async function setToken(token: string | null) {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const base = getApiBaseUrl()
-  const url = `${base}${path.startsWith('/') ? '' : '/'}${path}`
+  const base = getApiBaseUrl().replace(/\/+$/, '')
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const url = `${base}${normalizedPath}`
   const token = await getToken()
 
   const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`
